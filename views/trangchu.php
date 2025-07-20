@@ -72,7 +72,7 @@
                         <h5 class="card-title"><?= $product['name']; ?></h5>
                         <p><del><?= number_format($product['price']); ?>đ</del> <strong class="text-danger"><?= number_format($product['promotion_price']); ?>đ</strong></p>
                         <span class="badge bg-danger"><?= $percent; ?>%</span>
-                        <a href="/product/<?= $product['id']; ?>" class="btn btn-primary">Xem thêm</a>
+                        
                     </div>
                 </div>
             </div>
@@ -96,7 +96,7 @@
                     <div class="card-body">
                         <h5 class="card-title"><?= $product['name']; ?></h5>
                         <p><?= number_format($product['price']); ?>đ</p>
-                        <a href="/product/<?= $product['id']; ?>" class="btn btn-primary">Xem thêm</a>
+                        
                     </div>
                 </div>
             </div>

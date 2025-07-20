@@ -1,0 +1,61 @@
+/* Custom button style */
+.btn-circle {
+  border-radius: 50%;
+  background: linear-gradient(45deg, #2d72d9, #1e90ff);
+  color: white;
+  width: 36px;
+  height: 36px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(30,144,255,0.2);
+}
+.btn-circle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(30,144,255,0.3);
+}
+
+/* Product image hover effect */
+.product-img {
+  height: 300px;
+  object-fit: cover;
+  width: 100%;
+  transition: transform 0.3s;
+}
+.card .position-relative:hover .product-img {
+  transform: scale(1.05);
+  filter: brightness(0.95);
+}
+
+/* Overlay improvements */
+.overlay {
+  transition: opacity 0.3s;
+  opacity: 0;
+  backdrop-filter: blur(2px);
+}
+.card .position-relative:hover .overlay {
+  opacity: 1;
+  display: flex !important;
+}
+
+/* Footer gradient */
+.footer {
+  background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
+  color: #fff;
+  padding: 28px 0;
+}
+
+/* Font and spacing */
+body {
+  font-family: 'Roboto', Arial, sans-serif;
+  background: #f3f4f6;
+  color: #222;
+}
+h2, h4, h5 {
+  font-family: 'Montserrat', Arial, sans-serif;
+}
+
+/* Responsive tweaks */
+@media (max-width: 767px) {
+  .product-img { height: 180px; }
+  .footer { padding: 16px 0; }
+  .navbar-brand { font-size: 1.1em; }
+}

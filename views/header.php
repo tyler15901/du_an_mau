@@ -9,20 +9,7 @@
     <!-- Bootstrap Icons cho icon (truck, etc.). -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <!-- CSS tùy chỉnh cho theme nam tính (navy blue, gray). -->
-    <style>
-        body { font-family: Arial, sans-serif; color: black; }
-        .navbar { background: white; border-bottom: 1px solid #dee2e6; }
-        .nav-link { color: navy; }
-        .nav-link:hover { color: blue; }
-        .dropdown-menu { background: white; border: 1px solid gray; }
-        .btn-circle { border-radius: 50%; background: gray; color: white; width: 30px; height: 30px; }
-        .btn-circle:hover { transform: scale(1.1); }
-        .policy-icon { font-size: 2em; color: navy; }
-        .policy-icon:hover { transform: scale(1.1); transition: 0.3s; }
-        .footer { background: darkgray; color: white; padding: 20px 0; }
-        .card .position-relative:hover .overlay { display: flex !important; } /* Show overlay khi hover. */
-    
-    </style>
+    <link rel="stylesheet" href="<?= BASE_URL; ?>assets/css/custom.css">
 </head>
 <body>
     <!-- Comment: Bootstrap Navbar cho header giống Torano: Logo trái, menu giữa, icon phải. -->

@@ -60,13 +60,19 @@
         <?php foreach ($promotionProducts as $product): ?>
             <?php $percent = round((($product['price'] - $product['promotion_price']) / $product['price']) * 100); ?>
             <div class="col-md-3">
-                <div class="card">
+                <div class="card position-relative"> <!-- Position relative cho overlay absolute. -->
                     <img src="<?= BASE_URL . $product['image']; ?>" class="card-img-top" alt="<?= $product['name']; ?>">
+                    <!-- Comment: Overlay hover với 3 nút (ẩn ban đầu, show on hover). -->
+                    <div class="overlay d-flex justify-content-center align-items-center position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-none">
+                        <a href="/product/<?= $product['id']; ?>" class="btn btn-light mx-1 rounded-circle" title="Xem chi tiết"><i class="bi bi-search"></i></a>
+                        <a href="/checkout?product=<?= $product['id']; ?>" class="btn btn-light mx-1 rounded-circle" title="Mua ngay"><i class="bi bi-bag-check"></i></a>
+                        <button class="btn btn-light mx-1 rounded-circle add-to-cart" data-product-id="<?= $product['id']; ?>" title="Thêm vào giỏ hàng"><i class="bi bi-cart-plus"></i></button>
+                    </div>
                     <div class="card-body">
                         <h5 class="card-title"><?= $product['name']; ?></h5>
                         <p><del><?= number_format($product['price']); ?>đ</del> <strong class="text-danger"><?= number_format($product['promotion_price']); ?>đ</strong></p>
                         <span class="badge bg-danger"><?= $percent; ?>%</span>
-                        <a href="#" class="btn btn-primary">Xem thêm</a>
+                        <a href="/product/<?= $product['id']; ?>" class="btn btn-primary">Xem thêm</a>
                     </div>
                 </div>
             </div>
@@ -74,26 +80,29 @@
     </div>
 </section>
 
-<!-- Comment: Sản phẩm nổi bật grid (giả sử rating từ DB, dùng 4 sao mẫu). -->
+<!-- Comment: Phần Sản phẩm nổi bật tương tự, bỏ rating, thêm hover overlay. -->
 <section class="featured container my-5">
     <h2>Sản Phẩm Nổi Bật</h2>
     <div class="row">
         <?php foreach ($featuredProducts as $product): ?>
             <div class="col-md-3">
-                <div class="card">
+                <div class="card position-relative">
                     <img src="<?= BASE_URL . $product['image']; ?>" class="card-img-top" alt="<?= $product['name']; ?>">
+                    <div class="overlay d-flex justify-content-center align-items-center position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-none">
+                        <a href="/product/<?= $product['id']; ?>" class="btn btn-light mx-1 rounded-circle" title="Xem chi tiết"><i class="bi bi-search"></i></a>
+                        <a href="/checkout?product=<?= $product['id']; ?>" class="btn btn-light mx-1 rounded-circle" title="Mua ngay"><i class="bi bi-bag-check"></i></a>
+                        <button class="btn btn-light mx-1 rounded-circle add-to-cart" data-product-id="<?= $product['id']; ?>" title="Thêm vào giỏ hàng"><i class="bi bi-cart-plus"></i></button>
+                    </div>
                     <div class="card-body">
                         <h5 class="card-title"><?= $product['name']; ?></h5>
                         <p><?= number_format($product['price']); ?>đ</p>
-                        <div class="rating">★★★★☆ (4.5)</div> <!-- Giả sử rating, tính từ DB. -->
-                        <a href="#" class="btn btn-primary">Xem thêm</a>
+                        <a href="/product/<?= $product['id']; ?>" class="btn btn-primary">Xem thêm</a>
                     </div>
                 </div>
             </div>
         <?php endforeach; ?>
     </div>
 </section>
-
 <!-- Comment: Chính sách grid tĩnh hardcode (không DB). -->
 <section class="policy container my-5">
     <div class="row text-center">

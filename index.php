@@ -21,7 +21,7 @@ if (strpos($act, 'category/') === 0) {
     match ($act) {
         // Trang chủ.
         '/' => (new ProductController())->home(),
-
+        'add-to-cart' => (new ProductController())->addToCart(),
         // Default
         default => function() {
             header("HTTP/1.0 404 Not Found");

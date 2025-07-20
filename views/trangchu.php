@@ -9,8 +9,8 @@
                     <img src="<?= BASE_URL . $banner['image']; ?>" class="d-block w-100" alt="<?= $banner['title']; ?>">
                     <div class="carousel-caption d-none d-md-block">
                         <h5><?= $banner['title']; ?></h5>
-                        <p><?= $banner['desc']; ?></p>
-                        <div data-end-date="<?= $banner['end_date']; ?>"></div> <!-- Countdown JS. -->
+                        <p><?= $banner['description']; ?></p>
+                        <div data-end-date="<?= $banner['end_date']; ?>"></div>
                     </div>
                 </div>
             <?php endforeach; ?>

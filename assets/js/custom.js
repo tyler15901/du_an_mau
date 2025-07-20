@@ -35,3 +35,15 @@ document.querySelectorAll('.add-to-cart').forEach(button => {
 
 // Copyright year
 document.getElementById('copyright-year').innerHTML = new Date().getFullYear();
+
+// Sticky header shrink on scroll
+window.addEventListener('scroll', function() {
+  const header = document.querySelector('.sticky-header');
+  if (header) {
+    if (window.scrollY > 40) {
+      header.classList.add('shrink');
+    } else {
+      header.classList.remove('shrink');
+    }
+  }
+});

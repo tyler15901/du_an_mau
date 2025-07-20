@@ -1,61 +1,127 @@
-/* Custom button style */
-.btn-circle {
-  border-radius: 50%;
-  background: linear-gradient(45deg, #2d72d9, #1e90ff);
-  color: white;
-  width: 36px;
-  height: 36px;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 8px rgba(30,144,255,0.2);
+/* 2. CẢI THIỆN TRẢI NGHIỆM NGƯỜI DÙNG */
+
+/* Nút bấm: hiệu ứng hover, bo góc, shadow */
+.btn, .btn-circle {
+  border-radius: 24px;
+  box-shadow: 0 2px 6px rgba(44,62,80,.08);
+  transition: all 0.18s cubic-bezier(.4,0,.2,1);
+  font-weight: 500;
 }
-.btn-circle:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 16px rgba(30,144,255,0.3);
+.btn:hover, .btn-circle:hover {
+  box-shadow: 0 4px 16px rgba(30,144,255,0.25);
+  transform: translateY(-2px) scale(1.07);
+  filter: brightness(1.05);
+}
+.btn-circle {
+  border-radius: 50%!important;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Product image hover effect */
+/* Ảnh sản phẩm: zoom + shadow */
 .product-img {
   height: 300px;
   object-fit: cover;
   width: 100%;
-  transition: transform 0.3s;
+  transition: transform 0.33s cubic-bezier(.4,0,.2,1), filter 0.33s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.09);
 }
 .card .position-relative:hover .product-img {
-  transform: scale(1.05);
-  filter: brightness(0.95);
+  transform: scale(1.07) rotate(-1deg);
+  filter: brightness(0.98) drop-shadow(1px 2px 8px #aaa);
 }
 
-/* Overlay improvements */
+/* Overlay action */
 .overlay {
-  transition: opacity 0.3s;
   opacity: 0;
-  backdrop-filter: blur(2px);
+  transition: opacity 0.33s cubic-bezier(.4,0,.2,1), backdrop-filter 0.33s;
+  backdrop-filter: blur(0px);
 }
 .card .position-relative:hover .overlay {
   opacity: 1;
-  display: flex !important;
+  backdrop-filter: blur(2px);
 }
 
-/* Footer gradient */
+/* 3. RESPONSIVE & MOBILE-FRIENDLY */
+
+/* Tăng padding/margin giữa các card, section */
+.card {
+  margin-bottom: 24px;
+  border-radius: 20px;
+}
+section, .container {
+  margin-bottom: 32px;
+}
+@media (max-width: 767px) {
+  .product-img { height: 170px; }
+  .navbar-nav .nav-link i { font-size: 1.7em; }
+  .btn, .btn-circle { font-size: 1em; height: 36px; width: 36px;}
+  h2 { font-size: 1.25em; }
+  .card { margin-bottom: 16px; }
+}
+
+/* Các icon to hơn trên mobile */
+.navbar-nav .nav-link i {
+  font-size: 1.4em;
+  transition: color 0.2s;
+}
+.navbar-nav .nav-link:hover i {
+  color: #1e90ff;
+}
+
+/* 4. FOOTER & HEADER */
+
+/* Sticky header thu nhỏ khi scroll */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  background: #fff;
+  transition: box-shadow 0.22s, padding 0.22s;
+  box-shadow: 0 2px 8px rgba(30,144,255,0.07);
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.shrink {
+  padding-top: 2px!important;
+  padding-bottom: 2px!important;
+  box-shadow: 0 2px 16px rgba(30,144,255,0.15)!important;
+}
+
+/* Footer gradient, icon rõ ràng hơn */
 .footer {
   background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
   color: #fff;
   padding: 28px 0;
 }
+.footer .social-icons a {
+  margin: 0 8px;
+  font-size: 1.5em;
+  color: #fff;
+  transition: color 0.2s, transform 0.2s;
+}
+.footer .social-icons a:hover {
+  color: #1e90ff;
+  transform: scale(1.18);
+}
+.footer-logo {
+  max-width: 90px;
+  margin-bottom: 12px;
+}
 
-/* Font and spacing */
-body {
-  font-family: 'Roboto', Arial, sans-serif;
-  background: #f3f4f6;
-  color: #222;
+/* Dark/Light mode toggle */
+body.dark-mode {
+  background: #222;
+  color: #eee;
 }
-h2, h4, h5 {
-  font-family: 'Montserrat', Arial, sans-serif;
-}
-
-/* Responsive tweaks */
-@media (max-width: 767px) {
-  .product-img { height: 180px; }
-  .footer { padding: 16px 0; }
-  .navbar-brand { font-size: 1.1em; }
-}
+body.dark-mode .card, body.dark-mode .footer { background: #21293b; color: #eee; }
+body.dark-mode .navbar, body.dark-mode .sticky-header { background: #252f3f!important; }
+body.dark-mode .btn, body.dark-mode .btn-circle { background: #374151; color: #fff; }
+body.dark-mode .footer { background: linear-gradient(90deg, #25344a 0%, #374151 100%); }
+body.dark-mode .navbar-nav .nav-link i { color: #eee; }
+body.dark-mode .footer .social-icons a { color: #eee; }
+body.dark-mode .footer .social-icons a:hover { color: #60a5fa; }

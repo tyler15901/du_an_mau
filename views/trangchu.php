@@ -103,6 +103,12 @@
         <?php endforeach; ?>
     </div>
 </section>
+<style>
+    .card:hover .overlay { display: flex !important; } /* Show overlay khi hover card (ảnh + body). */
+    .overlay { transition: opacity 0.3s; opacity: 0; }
+    .card:hover .overlay { opacity: 1; }
+</style>
+
 <!-- Comment: Chính sách grid tĩnh hardcode (không DB). -->
 <section class="policy container my-5">
     <div class="row text-center">
@@ -163,6 +169,28 @@
     // Comment: Dynamic copyright year.
     document.getElementById('copyright-year').innerHTML = new Date().getFullYear();
 </script>
-
+<!-- Comment: JS cho add-to-cart AJAX. -->
+<script>
+    // Comment: Event click nút thêm vào giỏ hàng, gửi AJAX POST đến route /add-to-cart.
+    document.querySelectorAll('.add-to-cart').forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            fetch('<?= BASE_URL; ?>add-to-cart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `product_id=${productId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Comment: Update badge cart (giả sử badge là .badge trong icon cart header).
+                    document.querySelector('.badge.bg-danger').textContent = data.cart_count;
+                    alert('Thêm vào giỏ hàng thành công!');
+                }
+            })
+            .catch(error => console.error('Lỗi add to cart: ', error));
+        });
+    });
+</script>
 </body>
 </html>

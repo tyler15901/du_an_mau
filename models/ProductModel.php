@@ -37,4 +37,19 @@ class ProductModel
         $stmt->execute();
         return $stmt->fetchAll();
     }
+    public function addToCart() {
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $productId = $_POST['product_id']; // Lấy ID sản phẩm từ POST.
+            // Comment: Logic thêm vào giỏ hàng (session['cart'] là array, key = product_id, value = quantity).
+            if (!isset($_SESSION['cart'])) {
+                $_SESSION['cart'] = [];
+            }
+            if (isset($_SESSION['cart'][$productId])) {
+                $_SESSION['cart'][$productId]++; // Tăng quantity nếu đã có.
+            } else {
+                $_SESSION['cart'][$productId] = 1; // Thêm mới với quantity 1.
+            }
+            echo json_encode(['success' => true, 'cart_count' => array_sum($_SESSION['cart'])]); // Tổng số lượng giỏ hàng.
+        }
+    }
 }

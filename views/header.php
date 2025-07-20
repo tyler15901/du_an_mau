@@ -20,6 +20,8 @@
         .policy-icon { font-size: 2em; color: navy; }
         .policy-icon:hover { transform: scale(1.1); transition: 0.3s; }
         .footer { background: darkgray; color: white; padding: 20px 0; }
+        .card .position-relative:hover .overlay { display: flex !important; } /* Show overlay khi hover. */
+    
     </style>
 </head>
 <body>
@@ -38,7 +40,7 @@
                     <?php foreach ($menu as $item): ?>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <?= $item['name']; ?> <?= !empty($item['sub']) ? '▼' : ''; ?>
+                                <?= $item['name']; ?> 
                             </a>
                             <?php if (!empty($item['sub'])): ?>
                                 <ul class="dropdown-menu">

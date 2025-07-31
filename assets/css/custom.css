@@ -1,6 +1,119 @@
+/* Sticky header với transition mượt mà */
+.sticky-header {
+    transition: all 0.3s ease;
+    background-color: #fff;
+    z-index: 1000;
+    position: sticky;
+    top: 0;
+    box-shadow: 0 2px 8px rgba(30,144,255,0.07);
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.sticky-header.shrink {
+    padding-top: 2px!important;
+    padding-bottom: 2px!important;
+    box-shadow: 0 2px 16px rgba(30,144,255,0.15)!important;
+}
+
+/* Logo animation */
+.logo-container {
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s ease;
+}
+
+.logo-container:hover {
+    transform: scale(1.05);
+}
+
+.logo-img {
+    transition: all 0.3s ease;
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    color: #1a3c6d; /* Màu navy blue nam tính */
+}
+
+/* Menu item styling */
+.nav-link {
+    color: #1a3c6d !important;
+    padding: 0.5rem 1rem !important;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.nav-link:hover, .nav-link:focus {
+    color: #dc3545 !important; /* Màu đỏ khi hover */
+    background-color: rgba(220, 53, 69, 0.1);
+    border-radius: 5px;
+}
+
+.dropdown-menu {
+    background-color: #fff;
+    border: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    animation: dropdownFade 0.3s ease;
+}
+
+.dropdown-item {
+    color: #1a3c6d !important;
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+    color: #dc3545 !important;
+}
+
+/* Animation cho dropdown */
+@keyframes dropdownFade {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Search bar animation */
+.search-bar {
+    transition: all 0.3s ease;
+    transform: translateY(-100%);
+}
+
+.search-bar.show {
+    transform: translateY(0);
+}
+
+/* Icon chức năng */
+.nav-item .nav-link i {
+    font-size: 1.2rem;
+    transition: color 0.2s ease;
+}
+
+.nav-item .nav-link:hover i {
+    color: #dc3545;
+}
+
+/* Badge giỏ hàng */
+.badge-cart {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+}
+
+/* Responsive cho mobile */
+@media (max-width: 991.98px) {
+    .navbar-nav {
+        padding: 1rem 0;
+    }
+    .nav-link {
+        padding: 0.5rem 1rem !important;
+    }
+    .logo-text {
+        font-size: 1.2rem;
+    }
+}
+
 /* 2. CẢI THIỆN TRẢI NGHIỆM NGƯỜI DÙNG */
 
-/* Nút bấm: hiệu ứng hover, bo góc, shadow */
+/* Nút bấm: hiệu ứng hover, bo góc, shadow - Tối ưu hóa hiệu ứng tương tác cho nút bấm để tăng trải nghiệm người dùng, sử dụng transition mượt mà và shadow động. */
 .btn, .btn-circle {
   border-radius: 24px;
   box-shadow: 0 2px 6px rgba(44,62,80,.08);
@@ -22,7 +135,7 @@
   justify-content: center;
 }
 
-/* Ảnh sản phẩm: zoom + shadow */
+/* Ảnh sản phẩm: zoom + shadow - Thêm hiệu ứng zoom và shadow khi hover để làm nổi bật sản phẩm, tăng tính hấp dẫn. */
 .product-img {
   height: 300px;
   object-fit: cover;
@@ -35,7 +148,7 @@
   filter: brightness(0.98) drop-shadow(1px 2px 8px #aaa);
 }
 
-/* Overlay action */
+/* Overlay action - Hiệu ứng overlay mờ dần khi hover, sử dụng backdrop-filter để tạo hiệu ứng blur nền. */
 .overlay {
   opacity: 0;
   transition: opacity 0.33s cubic-bezier(.4,0,.2,1), backdrop-filter 0.33s;
@@ -48,7 +161,7 @@
 
 /* 3. RESPONSIVE & MOBILE-FRIENDLY */
 
-/* Tăng padding/margin giữa các card, section */
+/* Tăng padding/margin giữa các card, section - Cải thiện khoảng cách để giao diện thoáng đãng hơn trên các thiết bị. */
 .card {
   margin-bottom: 24px;
   border-radius: 20px;
@@ -57,14 +170,14 @@ section, .container {
   margin-bottom: 32px;
 }
 @media (max-width: 767px) {
-  .product-img { height: 170px; }
-  .navbar-nav .nav-link i { font-size: 1.7em; }
-  .btn, .btn-circle { font-size: 1em; height: 36px; width: 36px;}
-  h2 { font-size: 1.25em; }
-  .card { margin-bottom: 16px; }
+  .product-img { height: 170px; } /* Giảm chiều cao ảnh sản phẩm trên mobile để phù hợp màn hình nhỏ. */
+  .navbar-nav .nav-link i { font-size: 1.7em; } /* Tăng kích thước icon trên mobile để dễ chạm hơn. */
+  .btn, .btn-circle { font-size: 1em; height: 36px; width: 36px;} /* Điều chỉnh kích thước nút cho mobile. */
+  h2 { font-size: 1.25em; } /* Giảm font-size tiêu đề trên mobile để tránh chiếm chỗ. */
+  .card { margin-bottom: 16px; } /* Giảm margin card trên mobile để tiết kiệm không gian. */
 }
 
-/* Các icon to hơn trên mobile */
+/* Các icon to hơn trên mobile - Tăng kích thước và thêm transition màu khi hover cho icon. */
 .navbar-nav .nav-link i {
   font-size: 1.4em;
   transition: color 0.2s;
@@ -75,24 +188,7 @@ section, .container {
 
 /* 4. FOOTER & HEADER */
 
-/* Sticky header thu nhỏ khi scroll */
-.sticky-header {
-  position: sticky;
-  top: 0;
-  z-index: 1030;
-  background: #fff;
-  transition: box-shadow 0.22s, padding 0.22s;
-  box-shadow: 0 2px 8px rgba(30,144,255,0.07);
-  padding-top: 6px;
-  padding-bottom: 6px;
-}
-.shrink {
-  padding-top: 2px!important;
-  padding-bottom: 2px!important;
-  box-shadow: 0 2px 16px rgba(30,144,255,0.15)!important;
-}
-
-/* Footer gradient, icon rõ ràng hơn */
+/* Footer gradient, icon rõ ràng hơn - Sử dụng gradient nền cho footer để tạo chiều sâu, hiệu ứng hover cho icon social. */
 .footer {
   background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
   color: #fff;
@@ -112,16 +208,3 @@ section, .container {
   max-width: 90px;
   margin-bottom: 12px;
 }
-
-/* Dark/Light mode toggle */
-body.dark-mode {
-  background: #222;
-  color: #eee;
-}
-body.dark-mode .card, body.dark-mode .footer { background: #21293b; color: #eee; }
-body.dark-mode .navbar, body.dark-mode .sticky-header { background: #252f3f!important; }
-body.dark-mode .btn, body.dark-mode .btn-circle { background: #374151; color: #fff; }
-body.dark-mode .footer { background: linear-gradient(90deg, #25344a 0%, #374151 100%); }
-body.dark-mode .navbar-nav .nav-link i { color: #eee; }
-body.dark-mode .footer .social-icons a { color: #eee; }
-body.dark-mode .footer .social-icons a:hover { color: #60a5fa; }

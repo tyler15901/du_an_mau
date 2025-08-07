@@ -84,3 +84,17 @@ class UserModel
             return false;
         }
     }
+
+public function checkEmailExists($email)
+    {
+        try {
+            $stmt = $this->conn->prepare("SELECT * FROM users WHERE email = :email");
+            $stmt->bindParam(':email', $email);
+            $stmt->execute();
+            return $stmt->fetch() ? true : false; // Trả về true nếu tồn tại
+        } catch (PDOException $e) {
+            echo "Lỗi: " . $e->getMessage();
+            return false;
+        }
+    }
+}

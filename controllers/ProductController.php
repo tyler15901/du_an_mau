@@ -73,54 +73,82 @@ class ProductController
     public function showLoginPage()
     {
         $title = "Đăng nhập";
-        $errorMessage = isset($_GET['error']) ? "Email hoặc mật khẩu không đúng!" : "";
+        $errorMessage = "";
         require_once './views/login.php';
     }
 
+    // Xử lý đăng nhập với validation
     public function login()
     {
+        $errorMessage = "";
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
-        $user = $this->modelUser->checkLogin($email, $password);
-        if ($user) {
-            session_start();
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['name'];
-            header("Location: index.php");
+
+        // Validation: Kiểm tra không trống và email hợp lệ
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errorMessage = "Email không hợp lệ!";
+        } elseif (empty($password)) {
+            $errorMessage = "Mật khẩu không được trống!";
         } else {
-            header("Location: index.php?act=login&error=1");
+            $user = $this->modelUser->checkLogin($email, $password);
+            if ($user) {
+                session_start();
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_name'] = $user['name'];
+                header("Location: index.php");
+                exit();
+            } else {
+                $errorMessage = "Email hoặc mật khẩu không đúng!";
+            }
         }
-        exit();
+
+        $title = "Đăng nhập";
+        require_once './views/login.php'; // Require lại view với $errorMessage
     }
 
+    // Hiển thị trang đăng ký (đã có, thêm $errorMessage nếu có lỗi)
     public function showRegisterPage()
     {
         $title = "Đăng ký";
-        $errorMessage = isset($_GET['error']) ? "Email đã tồn tại!" : "";
-        $successMessage = isset($_GET['success']) ? "Đăng ký thành công!" : "";
+        $errorMessage = "";
+        $successMessage = "";
         require_once './views/register.php';
     }
 
+    // Xử lý đăng ký với validation
     public function register()
     {
+        $errorMessage = "";
         $name = $_POST['name'] ?? '';
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
-        $confirmPassword = $_POST['confirm_password'] ?? '';
-        if ($password === $confirmPassword) {
-            $existingUser = $this->modelUser->checkLogin($email, $password);
-            if (!$existingUser) {
-                if ($this->modelUser->registerUser($name, $email, $password)) {
-                    header("Location: index.php?act=login&success=1");
-                } else {
-                    header("Location: index.php?act=register&error=1");
-                }
-            } else {
-                header("Location: index.php?act=register&error=1");
-            }
+        $confirm_password = $_POST['confirm_password'] ?? '';
+
+        // Validation: Kiểm tra không trống, email hợp lệ, mật khẩu khớp và >6 ký tự, email chưa tồn tại
+        if (empty($name)) {
+            $errorMessage = "Tên không được trống!";
+        } elseif (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errorMessage = "Email không hợp lệ!";
+        } elseif (empty($password) || strlen($password) < 6) {
+            $errorMessage = "Mật khẩu phải ít nhất 6 ký tự!";
+        } elseif ($password != $confirm_password) {
+            $errorMessage = "Mật khẩu không khớp!";
         } else {
-            header("Location: index.php?act=register&error=1");
+            // Kiểm tra email tồn tại
+            if ($this->modelUser->checkEmailExists($email)) { // Hàm mới trong model, xem dưới
+                $errorMessage = "Email đã tồn tại!";
+            } else {
+                if ($this->modelUser->registerUser($name, $email, $password)) {
+                    $successMessage = "Đăng ký thành công!";
+                    header("Location: index.php?act=login");
+                    exit();
+                } else {
+                    $errorMessage = "Lỗi đăng ký, thử lại!";
+                }
+            }
         }
-        exit();
+
+        $title = "Đăng ký";
+        require_once './views/register.php'; // Require lại view với $errorMessage
     }
 }

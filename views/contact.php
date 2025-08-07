@@ -12,33 +12,6 @@ $successMessage = $successMessage ?? ""; // Thông báo thành công nếu có
     <title><?php echo $title; ?></title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        /* Tùy chỉnh phong cách đen trắng */
-        body {
-            background-color: #000000; /* Nền đen */
-            color: #FFFFFF; /* Chữ trắng */
-        }
-        .navbar {
-            background-color: #333333; /* Navbar tối hơn */
-        }
-        .contact-form {
-            background-color: #1a1a1a; /* Nền form màu xám đậm */
-            padding: 20px;
-            border: 1px solid #555555; /* Viền xám */
-        }
-        .form-control {
-            background-color: #222222; /* Nền input */
-            color: #FFFFFF; /* Chữ trắng trong input */
-            border: 1px solid #555555; /* Viền input */
-        }
-        .btn {
-            background-color: #FFFFFF; /* Nút trắng */
-            color: #000000; /* Chữ đen trên nút */
-        }
-        .btn:hover {
-            background-color: #CCCCCC; /* Nút xám nhạt khi hover */
-        }
-    </style>
 </head>
 <body>
     <!-- Header -->

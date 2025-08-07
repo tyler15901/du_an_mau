@@ -11,21 +11,6 @@ $title = $title ?? "Về chúng tôi";
     <title><?php echo $title; ?></title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        /* Tùy chỉnh phong cách đen trắng */
-        body {
-            background-color: #000000; /* Nền đen */
-            color: #FFFFFF; /* Chữ trắng */
-        }
-        .navbar {
-            background-color: #333333; /* Navbar tối hơn */
-        }
-        .about-section {
-            background-color: #1a1a1a; /* Nền section màu xám đậm */
-            padding: 20px;
-            border: 1px solid #555555; /* Viền xám */
-        }
-    </style>
 </head>
 <body>
     <!-- Header -->

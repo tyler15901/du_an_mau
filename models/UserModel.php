@@ -9,29 +9,33 @@ class UserModel
         $this->conn = connectDatabase(); // Kết nối CSDL
     }
 
-    // Kiểm tra đăng nhập
+    // Kiểm tra đăng nhập (đã có, giữ nguyên)
     public function checkLogin($email, $password)
     {
         try {
-            $stmt = $this->conn->prepare("SELECT * FROM users WHERE email = :email AND password = :password");
+            $stmt = $this->conn->prepare("SELECT * FROM users WHERE email = :email");
             $stmt->bindParam(':email', $email);
-            $stmt->bindParam(':password', md5($password)); // Sử dụng md5 để mã hóa mật khẩu (nên thay bằng bcrypt trong thực tế)
             $stmt->execute();
-            return $stmt->fetch();
+            $user = $stmt->fetch();
+            if ($user && password_verify($password, $user['password'])) { // Sử dụng password_verify để kiểm tra mật khẩu mã hóa
+                return $user;
+            }
+            return null;
         } catch (PDOException $e) {
             echo "Lỗi: " . $e->getMessage();
             return null;
         }
     }
 
-    // Đăng ký người dùng
+    // Đăng ký người dùng (đã có, cập nhật dùng password_hash)
     public function registerUser($name, $email, $password)
     {
         try {
+            $hashedPassword = password_hash($password, PASSWORD_BCRYPT); // Mã hóa mật khẩu bằng bcrypt (an toàn hơn md5)
             $stmt = $this->conn->prepare("INSERT INTO users (name, email, password) VALUES (:name, :email, :password)");
             $stmt->bindParam(':name', $name);
             $stmt->bindParam(':email', $email);
-            $stmt->bindParam(':password', md5($password)); // Sử dụng md5 (nên thay bằng bcrypt)
+            $stmt->bindParam(':password', $hashedPassword);
             return $stmt->execute();
         } catch (PDOException $e) {
             echo "Lỗi: " . $e->getMessage();
@@ -39,7 +43,7 @@ class UserModel
         }
     }
 
-    // Lấy danh sách tất cả người dùng
+    // Lấy danh sách tất cả người dùng (đã có, giữ nguyên)
     public function getAllUsers()
     {
         try {
@@ -51,4 +55,32 @@ class UserModel
             return [];
         }
     }
-}
+
+    // Mới: Thêm người dùng
+    public function addUser($name, $email, $password)
+    {
+        try {
+            $hashedPassword = password_hash($password, PASSWORD_BCRYPT); // Mã hóa mật khẩu
+            $stmt = $this->conn->prepare("INSERT INTO users (name, email, password) VALUES (:name, :email, :password)");
+            $stmt->bindParam(':name', $name);
+            $stmt->bindParam(':email', $email);
+            $stmt->bindParam(':password', $hashedPassword);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            echo "Lỗi: " . $e->getMessage();
+            return false;
+        }
+    }
+
+    // Mới: Xóa người dùng
+    public function deleteUser($id)
+    {
+        try {
+            $stmt = $this->conn->prepare("DELETE FROM users WHERE id = :id");
+            $stmt->bindParam(':id', $id);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            echo "Lỗi: " . $e->getMessage();
+            return false;
+        }
+    }

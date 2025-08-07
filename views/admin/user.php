@@ -7,12 +7,8 @@ if (!isset($_SESSION['admin_id'])) {
 }
 $title = $title ?? "Quản lý người dùng";
 
-// Lấy danh sách người dùng từ model (giả định, bạn có thể mở rộng trong UserModel.php)
-$users = [
-    ['id' => 1, 'name' => 'User1', 'email' => 'user1@example.com', 'created_at' => '2025-08-07'],
-    ['id' => 2, 'name' => 'User2', 'email' => 'user2@example.com', 'created_at' => '2025-08-06'],
-    // Thêm dữ liệu từ CSDL thực tế
-];
+// $users từ controller
+$users = $users ?? [];
 ?>
 
 <!DOCTYPE html>
@@ -21,7 +17,6 @@ $users = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $title; ?></title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -69,7 +64,7 @@ $users = [
     </style>
 </head>
 <body>
-    <!-- Sidebar bên trái -->
+    <!-- Sidebar -->
     <div class="sidebar">
         <div class="text-center mb-4">
             <img src="https://via.placeholder.com/150x50?text=Logo" alt="Logo" class="img-fluid">
@@ -93,7 +88,7 @@ $users = [
         </div>
     </div>
 
-    <!-- Nội dung bên phải -->
+    <!-- Nội dung -->
     <div class="content">
         <div class="header-top">
             <a href="#" class="me-3">
@@ -112,9 +107,6 @@ $users = [
 
         <!-- Khu vực quản lý người dùng -->
         <h2>Người dùng</h2>
-        <div class="d-flex justify-content-end mb-3">
-            <a href="index.php?act=add-user" class="btn btn-success">Add User</a>
-        </div>
         <table class="table">
             <thead>
                 <tr>
@@ -133,8 +125,7 @@ $users = [
                         <td><?php echo $user['email']; ?></td>
                         <td><?php echo $user['created_at']; ?></td>
                         <td>
-                            <a href="index.php?act=edit-user&id=<?php echo $user['id']; ?>" class="btn btn-primary btn-sm">Sửa</a>
-                            <a href="index.php?act=delete-user&id=<?php echo $user['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
+                            <a href="index.php?act=delete-user&id=<?php echo $user['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a> <!-- Liên kết xóa với confirm -->
                         </td>
                     </tr>
                 <?php endforeach; ?>

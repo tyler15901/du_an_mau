@@ -1,55 +1,53 @@
 <?php
-// Comment: Class Model cho sản phẩm, tương tác với bảng products trong MySQL.
+// Có class chứa các function thực thi tương tác với cơ sở dữ liệu
 class ProductModel
 {
     public $conn;
 
     public function __construct()
     {
-        $this->conn = connectDB(); // Kết nối DB.
+        $this->conn = connectDatabase(); // Kết nối CSDL qua hàm trong commons/function.php
     }
 
-    // Comment: Lấy tất cả sản phẩm (mở rộng từ placeholder của bạn).
-    public function getAllProduct()
-    {
-        $stmt = $this->conn->prepare("SELECT * FROM products");
-        $stmt->execute();
-        return $stmt->fetchAll();
-    }
-
-    // Comment: Thêm try-catch trong method getPromotionProducts().
-    public function getPromotionProducts()
+    // Lấy danh sách tất cả sản phẩm
+    public function getAllProducts()
     {
         try {
-            $stmt = $this->conn->prepare("SELECT * FROM products WHERE promotion_price > 0 AND promotion_end_date > NOW() LIMIT 4");
+            $stmt = $this->conn->prepare("SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id");
             $stmt->execute();
             return $stmt->fetchAll();
         } catch (PDOException $e) {
-            error_log("Lỗi query sản phẩm khuyến mãi: " . $e->getMessage());
+            echo "Lỗi: " . $e->getMessage();
             return [];
         }
     }
 
-    // Comment: Lấy sản phẩm nổi bật (sắp xếp theo views DESC).
-    public function getFeaturedProducts()
+    // Lấy thông tin sản phẩm theo ID
+    public function getProductById($id)
     {
-        $stmt = $this->conn->prepare("SELECT * FROM products ORDER BY views DESC LIMIT 4");
-        $stmt->execute();
-        return $stmt->fetchAll();
+        try {
+            $stmt = $this->conn->prepare("SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.id = :id");
+            $stmt->bindParam(':id', $id);
+            $stmt->execute();
+            return $stmt->fetch();
+        } catch (PDOException $e) {
+            echo "Lỗi: " . $e->getMessage();
+            return null;
+        }
     }
-    public function addToCart() {
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $productId = $_POST['product_id']; // Lấy ID sản phẩm từ POST.
-            // Comment: Logic thêm vào giỏ hàng (session['cart'] là array, key = product_id, value = quantity).
-            if (!isset($_SESSION['cart'])) {
-                $_SESSION['cart'] = [];
-            }
-            if (isset($_SESSION['cart'][$productId])) {
-                $_SESSION['cart'][$productId]++; // Tăng quantity nếu đã có.
-            } else {
-                $_SESSION['cart'][$productId] = 1; // Thêm mới với quantity 1.
-            }
-            echo json_encode(['success' => true, 'cart_count' => array_sum($_SESSION['cart'])]); // Tổng số lượng giỏ hàng.
+
+    // Lấy sản phẩm liên quan dựa trên danh mục
+    public function getRelatedProducts($categoryId, $currentProductId)
+    {
+        try {
+            $stmt = $this->conn->prepare("SELECT * FROM products WHERE category_id = :category_id AND id != :current_id LIMIT 4");
+            $stmt->bindParam(':category_id', $categoryId);
+            $stmt->bindParam(':current_id', $currentProductId);
+            $stmt->execute();
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            echo "Lỗi: " . $e->getMessage();
+            return [];
         }
     }
 }

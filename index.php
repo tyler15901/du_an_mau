@@ -21,6 +21,24 @@ if ($pdo === null) {
 }
 
 $act = $_GET['act'] ?? '/';
+if (isset($_GET['act'])) {
+    switch ($_GET['act']) {
+        case 'products':
+            include 'views/product.php';
+            break;
+        case 'about':
+            include 'views/about.php';
+            break;
+        case 'contact':
+            include 'views/contact.php';
+            break;
+        // ... các case khác
+        default:
+            // Xử lý mặc định hoặc báo lỗi
+    }
+} else {
+    include 'views/home.php';
+}
 
 if (strpos($act, 'category/') === 0) {
     $slug = substr($act, 9);

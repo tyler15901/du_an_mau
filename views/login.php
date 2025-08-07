@@ -10,37 +10,35 @@ $errorMessage = $errorMessage ?? ""; // Thông báo lỗi nếu có
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $title; ?></title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Tùy chỉnh phong cách đen trắng */
         body {
-            background-color: #000000; /* Nền đen */
-            color: #FFFFFF; /* Chữ trắng */
+            background-color: #000000;
+            color: #FFFFFF;
         }
         .navbar {
-            background-color: #333333; /* Navbar tối hơn */
+            background-color: #333333;
         }
         .login-form {
-            background-color: #1a1a1a; /* Nền form màu xám đậm */
+            background-color: #1a1a1a;
             padding: 20px;
-            border: 1px solid #555555; /* Viền xám */
+            border: 1px solid #555555;
         }
         .form-control {
-            background-color: #222222; /* Nền input */
-            color: #FFFFFF; /* Chữ trắng trong input */
-            border: 1px solid #555555; /* Viền input */
+            background-color: #222222;
+            color: #FFFFFF;
+            border: 1px solid #555555;
         }
         .btn {
-            background-color: #FFFFFF; /* Nút trắng */
-            color: #000000; /* Chữ đen trên nút */
+            background-color: #FFFFFF;
+            color: #000000;
         }
         .btn:hover {
-            background-color: #CCCCCC; /* Nút xám nhạt khi hover */
+            background-color: #CCCCCC;
         }
     </style>
 </head>
-<body>
+body
     <!-- Header -->
     <?php include 'layouts/header.php'; ?>
 
@@ -50,7 +48,7 @@ $errorMessage = $errorMessage ?? ""; // Thông báo lỗi nếu có
             <h2>Đăng nhập</h2>
             <?php if ($errorMessage): ?>
                 <div class="alert alert-danger" role="alert">
-                    <?php echo $errorMessage; ?>
+                    <?php echo $errorMessage; ?> <!-- Hiển thị lỗi từ validation -->
                 </div>
             <?php endif; ?>
             <form action="index.php?act=login" method="POST">

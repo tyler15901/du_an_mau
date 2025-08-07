@@ -1,37 +1,25 @@
 <?php
-// Có class chứa các function thực thi tương tác với cơ sở dữ liệu cho bình luận
-class CommentModel
-{
-    public $conn;
-
-    public function __construct()
-    {
-        $this->conn = connectDatabase(); // Kết nối CSDL
+class CommentModel {
+    private $pdo;
+    public function __construct($pdo) {
+        $this->pdo = $pdo;
     }
 
-    // Lấy danh sách tất cả bình luận
-    public function getAllComments()
-    {
-        try {
-            $stmt = $this->conn->prepare("SELECT * FROM comments");
-            $stmt->execute();
-            return $stmt->fetchAll();
-        } catch (PDOException $e) {
-            echo "Lỗi: " . $e->getMessage();
-            return [];
-        }
+    public function getCommentsByProduct($product_id) {
+        $sql = "SELECT c.*, u.name as user_name FROM comments c
+                JOIN users u ON c.user_id = u.id
+                WHERE c.product_id = ?
+                ORDER BY c.date DESC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$product_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Xóa bình luận
-    public function deleteComment($id)
-    {
-        try {
-            $stmt = $this->conn->prepare("DELETE FROM comments WHERE id = :id");
-            $stmt->bindParam(':id', $id);
-            return $stmt->execute();
-        } catch (PDOException $e) {
-            echo "Lỗi: " . $e->getMessage();
-            return false;
-        }
+    public function addComment($user_id, $product_id, $content) {
+        $sql = "INSERT INTO comments (user_id, product_id, content, date)
+                VALUES (?, ?, ?, NOW())";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([$user_id, $product_id, $content]);
     }
 }
+?>

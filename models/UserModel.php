@@ -6,7 +6,7 @@ class UserModel
 
     public function __construct()
     {
-        $this->conn = connectDatabase(); // Kết nối CSDL
+        $this->conn = connect_db(); // Kết nối CSDL
     }
 
     // Kiểm tra đăng nhập (đã có, giữ nguyên)

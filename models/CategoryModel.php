@@ -6,7 +6,7 @@ class CategoryModel
 
     public function __construct()
     {
-        $this->conn = connectDatabase(); // Kết nối CSDL
+        $this->conn = connect_db(); // Kết nối CSDL
     }
 
     // Lấy danh sách tất cả danh mục

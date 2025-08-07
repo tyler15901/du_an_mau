@@ -11,35 +11,38 @@ $categories = $categories ?? []; // Danh mục từ model
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $title; ?></title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Tùy chỉnh phong cách đen trắng */
         body {
-            background-color: #000000; /* Nền đen */
-            color: #FFFFFF; /* Chữ trắng */
+            background-color: #000000;
+            color: #FFFFFF;
         }
         .navbar {
-            background-color: #333333; /* Navbar tối hơn */
+            background-color: #333333;
         }
         .card {
-            background-color: #1a1a1a; /* Card sản phẩm màu xám đậm */
-            border: 1px solid #555555; /* Viền xám */
+            background-color: #1a1a1a;
+            border: 1px solid #555555;
         }
         .sidebar {
-            background-color: #222222; /* Nền sidebar */
+            background-color: #222222;
             padding: 15px;
         }
         .btn {
-            background-color: #FFFFFF; /* Nút trắng */
-            color: #000000; /* Chữ đen trên nút */
+            background-color: #FFFFFF;
+            color: #000000;
         }
         .btn:hover {
-            background-color: #CCCCCC; /* Nút xám nhạt khi hover */
+            background-color: #CCCCCC;
+        }
+        .form-control {
+            background-color: #222222;
+            color: #FFFFFF;
+            border-color: #555555;
         }
     </style>
 </head>
-<body>
+body
     <!-- Header -->
     <?php include 'layouts/header.php'; ?>
 
@@ -60,8 +63,8 @@ $categories = $categories ?? []; // Danh mục từ model
                             </li>
                         <?php endforeach; ?>
                     </ul>
-                    <h5>Gía</h5>
-                    <select class="form-select mt-2" style="background-color: #1a1a1a; color: #FFFFFF;">
+                    <h5 class="mt-3">Giá</h5>
+                    <select class="form-select mt-2" name="price_range" onchange="this.form.submit()" style="background-color: #1a1a1a; color: #FFFFFF;">
                         <option value="all">Tất cả</option>
                         <option value="0-500000">Dưới 500.000 VNĐ</option>
                         <option value="500000-1000000">500.000 - 1.000.000 VNĐ</option>
@@ -72,6 +75,14 @@ $categories = $categories ?? []; // Danh mục từ model
 
             <!-- Product Section -->
             <div class="col-12 col-md-9">
+                <!-- Form search -->
+                <form method="GET" class="mb-3">
+                    <input type="hidden" name="act" value="products">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="search" placeholder="Tìm sản phẩm..." value="<?php echo $_GET['search'] ?? ''; ?>"> <!-- Input search -->
+                        <button type="submit" class="btn">Tìm</button> <!-- Nút tìm -->
+                    </div>
+                </form>
                 <div class="row">
                     <?php for ($i = 1; $i <= 4; $i++): // Slider 1 2 3 4 ?>
                         <div class="col-12 mb-4">

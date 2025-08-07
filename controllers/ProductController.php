@@ -152,3 +152,17 @@ class ProductController
         require_once './views/register.php'; // Require lại view với $errorMessage
     }
 }
+
+// Hiển thị trang danh sách sản phẩm với search/filter
+
+public function showProductsPage()
+    {
+        $title = "Danh sách sản phẩm thời trang nam";
+        $search = $_GET['search'] ?? ''; // Lấy param search từ GET
+        $category = $_GET['category'] ?? ''; // Lấy param category
+        $price_range = $_GET['price_range'] ?? 'all'; // Lấy param price range
+        $products = $this->modelProduct->getAllProducts($search, $category, $price_range); // Gọi hàm getAllProducts với param
+        $categories = $this->modelCategory->getAllCategories();
+        require_once './views/products.php';
+    }
+}

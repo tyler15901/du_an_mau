@@ -6,6 +6,12 @@ if (!isset($_SESSION['admin_id'])) {
     exit();
 }
 $title = $title ?? "Bảng điều khiển Admin";
+
+// Lấy dữ liệu từ model (giả định các model đã được khởi tạo trong controller)
+$categories = $categories ?? []; // Danh sách danh mục
+$products = $products ?? []; // Danh sách sản phẩm
+$users = $users ?? []; // Danh sách người dùng
+$comments = $comments ?? []; // Danh sách bình luận
 ?>
 
 <!DOCTYPE html>
@@ -17,7 +23,6 @@ $title = $title ?? "Bảng điều khiển Admin";
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Tùy chỉnh phong cách đen trắng */
         body {
             background-color: #000000; /* Nền đen */
             color: #FFFFFF; /* Chữ trắng */
@@ -30,9 +35,12 @@ $title = $title ?? "Bảng điều khiển Admin";
             padding: 20px;
             border: 1px solid #555555; /* Viền xám */
         }
-        .card {
-            background-color: #222222; /* Nền card */
-            border: 1px solid #555555; /* Viền xám */
+        .table {
+            background-color: #222222; /* Nền bảng */
+            color: #FFFFFF; /* Chữ trắng */
+        }
+        .table th, .table td {
+            border-color: #555555; /* Viền bảng */
         }
         .btn {
             background-color: #FFFFFF; /* Nút trắng */
@@ -55,53 +63,84 @@ $title = $title ?? "Bảng điều khiển Admin";
         </div>
     </nav>
 
-    <!-- Admin Dashboard -->
+    <!-- Admin Dashboard with Unified Table -->
     <div class="container mt-4 admin-panel">
         <h2>Bảng điều khiển</h2>
-        <div class="row">
-            <!-- Quản lý danh mục -->
-            <div class="col-12 col-md-3 mb-3">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Quản lý danh mục</h5>
-                        <p class="card-text">Thêm, sửa, xóa danh mục sản phẩm.</p>
-                        <a href="index.php?act=admin-categories" class="btn">Quản lý</a>
-                    </div>
-                </div>
-            </div>
+        <p>Quản lý nhanh các loại dữ liệu. Nhấn vào "Quản lý chi tiết" để xem toàn bộ hoặc thực hiện thêm/sửa.</p>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Loại</th>
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th>Thông tin thêm</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Danh mục -->
+                <?php foreach ($categories as $category): ?>
+                    <tr>
+                        <td>Danh mục</td>
+                        <td><?php echo $category['id'] ?? ''; ?></td>
+                        <td><?php echo $category['name'] ?? ''; ?></td>
+                        <td>-</td>
+                        <td>
+                            <a href="index.php?act=admin-categories" class="btn btn-info btn-sm me-1">Quản lý chi tiết</a>
+                            <a href="index.php?act=edit-category&id=<?php echo $category['id'] ?? ''; ?>" class="btn btn-primary btn-sm">Sửa</a>
+                            <a href="index.php?act=delete-category&id=<?php echo $category['id'] ?? ''; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
 
-            <!-- Quản lý sản phẩm -->
-            <div class="col-12 col-md-3 mb-3">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Quản lý sản phẩm</h5>
-                        <p class="card-text">Thêm, sửa, xóa sản phẩm.</p>
-                        <a href="index.php?act=admin-products" class="btn">Quản lý</a>
-                    </div>
-                </div>
-            </div>
+                <!-- Sản phẩm -->
+                <?php foreach ($products as $product): ?>
+                    <tr>
+                        <td>Sản phẩm</td>
+                        <td><?php echo $product['id'] ?? ''; ?></td>
+                        <td><?php echo $product['name'] ?? ''; ?></td>
+                        <td><?php echo number_format($product['price'] ?? 0, 0, ',', '.') . ' VNĐ'; ?></td>
+                        <td>
+                            <a href="index.php?act=admin-products" class="btn btn-info btn-sm me-1">Quản lý chi tiết</a>
+                            <a href="index.php?act=edit-product&id=<?php echo $product['id'] ?? ''; ?>" class="btn btn-primary btn-sm">Sửa</a>
+                            <a href="index.php?act=delete-product&id=<?php echo $product['id'] ?? ''; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
 
-            <!-- Quản lý người dùng -->
-            <div class="col-12 col-md-3 mb-3">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Quản lý người dùng</h5>
-                        <p class="card-text">Xem, chỉnh sửa thông tin người dùng.</p>
-                        <a href="index.php?act=admin-users" class="btn">Quản lý</a>
-                    </div>
-                </div>
-            </div>
+                <!-- Người dùng -->
+                <?php foreach ($users as $user): ?>
+                    <tr>
+                        <td>Người dùng</td>
+                        <td><?php echo $user['id'] ?? ''; ?></td>
+                        <td><?php echo $user['name'] ?? ''; ?></td>
+                        <td><?php echo $user['email'] ?? ''; ?></td>
+                        <td>
+                            <a href="index.php?act=admin-users" class="btn btn-info btn-sm me-1">Quản lý chi tiết</a>
+                            <a href="index.php?act=edit-user&id=<?php echo $user['id'] ?? ''; ?>" class="btn btn-primary btn-sm">Sửa</a>
+                            <a href="index.php?act=delete-user&id=<?php echo $user['id'] ?? ''; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
 
-            <!-- Quản lý bình luận -->
-            <div class="col-12 col-md-3 mb-3">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Quản lý bình luận</h5>
-                        <p class="card-text">Duyệt, xóa bình luận từ khách hàng.</p>
-                        <a href="index.php?act=admin-comments" class="btn">Quản lý</a>
-                    </div>
-                </div>
-            </div>
+                <!-- Bình luận -->
+                <?php foreach ($comments as $comment): ?>
+                    <tr>
+                        <td>Bình luận</td>
+                        <td><?php echo $comment['id'] ?? ''; ?></td>
+                        <td><?php echo $comment['user'] ?? ''; ?></td>
+                        <td><?php echo $comment['content'] ?? ''; ?></td>
+                        <td>
+                            <a href="index.php?act=admin-comments" class="btn btn-info btn-sm me-1">Quản lý chi tiết</a>
+                            <a href="index.php?act=delete-comment&id=<?php echo $comment['id'] ?? ''; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        <div class="mt-3">
+            <a href="index.php?act=add-category" class="btn btn-success me-2">Thêm danh mục</a>
+            <a href="index.php?act=add-product" class="btn btn-success">Thêm sản phẩm</a>
         </div>
     </div>
 

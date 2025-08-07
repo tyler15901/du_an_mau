@@ -5,10 +5,10 @@ if (!isset($_SESSION['admin_id'])) {
     header("Location: index.php?act=login");
     exit();
 }
-$title = $title ?? "Quản lý sản phẩm";
+$title = $title ?? "Xem chi tiết sản phẩm";
 
-// Lấy danh sách sản phẩm từ model
-$products = $products ?? []; // Từ controller
+// Giả định $product là dữ liệu sản phẩm từ controller (lấy theo ID)
+$product = $product ?? ['id' => '', 'name' => '', 'price' => '', 'category_name' => '', 'description' => '', 'image' => ''];
 ?>
 
 <!DOCTYPE html>
@@ -20,8 +20,8 @@ $products = $products ?? []; // Từ controller
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #000000;
-            color: #FFFFFF;
+            background-color: #000000; /* Nền đen */
+            color: #FFFFFF; /* Chữ trắng */
         }
         .sidebar {
             background-color: #000000;
@@ -47,24 +47,22 @@ $products = $products ?? []; // Từ controller
             display: flex;
             justify-content: flex-end;
         }
-        .table {
-            background-color: #222222;
-            color: #FFFFFF;
+        .detail-card {
+            background-color: #222222; /* Nền card xám tối */
+            border: 1px solid #555555; /* Viền xám */
+            padding: 15px;
         }
-        .table th, .table td {
-            border-color: #555555;
-        }
-        .btn-success {
+        .btn-primary {
             background-color: #FFFFFF;
             color: #000000;
         }
-        .btn-success:hover {
+        .btn-primary:hover {
             background-color: #CCCCCC;
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
+    <!-- Sidebar (giống các file khác) -->
     <div class="sidebar">
         <div class="text-center mb-4">
             <img src="https://via.placeholder.com/150x50?text=Logo" alt="Logo" class="img-fluid">
@@ -90,6 +88,7 @@ $products = $products ?? []; // Từ controller
 
     <!-- Nội dung -->
     <div class="content">
+        <!-- Header top -->
         <div class="header-top">
             <a href="#" class="me-3">
                 <i class="bi bi-bell"></i> Thông báo <span class="badge bg-danger">3</span>
@@ -105,36 +104,16 @@ $products = $products ?? []; // Từ controller
             </div>
         </div>
 
-        <h2>Sản phẩm</h2>
-        <div class="d-flex justify-content-end mb-3">
-            <a href="index.php?act=add-product" class="btn btn-success">Add Product</a>
+        <!-- Hiển thị chi tiết sản phẩm -->
+        <h2>Chi tiết sản phẩm</h2>
+        <div class="detail-card">
+            <h4>Tên: <?php echo $product['name']; ?></h4>
+            <p>Giá: <?php echo number_format($product['price'], 0, ',', '.') . ' VNĐ'; ?></p>
+            <p>Danh mục: <?php echo $product['category_name']; ?></p>
+            <p>Mô tả: <?php echo $product['description']; ?></p>
+            <img src="<?php echo $product['image']; ?>" alt="Hình ảnh sản phẩm" class="img-fluid" style="max-width: 300px;"> <!-- Hiển thị ảnh -->
         </div>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Tên sản phẩm</th>
-                    <th>Giá</th>
-                    <th>Danh mục</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($products as $product): ?>
-                    <tr>
-                        <td><?php echo $product['id']; ?></td>
-                        <td><?php echo $product['name']; ?></td>
-                        <td><?php echo number_format($product['price'], 0, ',', '.') . ' VNĐ'; ?></td>
-                        <td><?php echo $product['category_name']; ?></td>
-                        <td>
-                            <a href="index.php?act=view-product&id=<?php echo $product['id']; ?>" class="btn btn-info btn-sm">Xem</a> <!-- Liên kết xem chi tiết -->
-                            <a href="index.php?act=edit-product&id=<?php echo $product['id']; ?>" class="btn btn-primary btn-sm">Sửa</a>
-                            <a href="index.php?act=delete-product&id=<?php echo $product['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+        <a href="index.php?act=admin-products" class="btn btn-primary mt-3">Quay lại danh sách</a> <!-- Nút quay lại -->
     </div>
 
     <!-- Bootstrap JS và Icons -->

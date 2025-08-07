@@ -1,53 +1,60 @@
 <?php
-// Có class chứa các function thực thi tương tác với cơ sở dữ liệu
 class ProductModel
 {
     public $conn;
 
     public function __construct()
     {
-        $this->conn = connectDatabase(); // Kết nối CSDL qua hàm trong commons/function.php
+        $this->conn = connectDatabase();
     }
 
-    // Lấy danh sách tất cả sản phẩm
-    public function getAllProducts()
+    // ... (các hàm cũ giữ nguyên)
+
+    // Thêm sản phẩm mới
+    public function addProduct($name, $price, $category_id, $description, $image)
     {
         try {
-            $stmt = $this->conn->prepare("SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id");
-            $stmt->execute();
-            return $stmt->fetchAll();
+            $stmt = $this->conn->prepare("INSERT INTO products (name, price, category_id, description, image) VALUES (:name, :price, :category_id, :description, :image)");
+            $stmt->bindParam(':name', $name);
+            $stmt->bindParam(':price', $price);
+            $stmt->bindParam(':category_id', $category_id);
+            $stmt->bindParam(':description', $description);
+            $stmt->bindParam(':image', $image);
+            return $stmt->execute();
         } catch (PDOException $e) {
             echo "Lỗi: " . $e->getMessage();
-            return [];
+            return false;
         }
     }
 
-    // Lấy thông tin sản phẩm theo ID
-    public function getProductById($id)
+    // Cập nhật sản phẩm
+    public function updateProduct($id, $name, $price, $category_id, $description, $image)
     {
         try {
-            $stmt = $this->conn->prepare("SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.id = :id");
+            $stmt = $this->conn->prepare("UPDATE products SET name = :name, price = :price, category_id = :category_id, description = :description, image = :image WHERE id = :id");
             $stmt->bindParam(':id', $id);
-            $stmt->execute();
-            return $stmt->fetch();
+            $stmt->bindParam(':name', $name);
+            $stmt->bindParam(':price', $price);
+            $stmt->bindParam(':category_id', $category_id);
+            $stmt->bindParam(':description', $description);
+            $stmt->bindParam(':image', $image);
+            return $stmt->execute();
         } catch (PDOException $e) {
             echo "Lỗi: " . $e->getMessage();
-            return null;
+            return false;
         }
     }
 
-    // Lấy sản phẩm liên quan dựa trên danh mục
-    public function getRelatedProducts($categoryId, $currentProductId)
+    // Xóa sản phẩm
+    public function deleteProduct($id)
     {
         try {
-            $stmt = $this->conn->prepare("SELECT * FROM products WHERE category_id = :category_id AND id != :current_id LIMIT 4");
-            $stmt->bindParam(':category_id', $categoryId);
-            $stmt->bindParam(':current_id', $currentProductId);
-            $stmt->execute();
-            return $stmt->fetchAll();
+            $stmt = $this->conn->prepare("DELETE FROM products WHERE id = :id");
+            $stmt->bindParam(':id', $id);
+            return $stmt->execute();
         } catch (PDOException $e) {
             echo "Lỗi: " . $e->getMessage();
-            return [];
+            return false;
         }
     }
 }

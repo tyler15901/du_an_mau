@@ -5,10 +5,12 @@ if (!isset($_SESSION['admin_id'])) {
     header("Location: index.php?act=login");
     exit();
 }
-$title = $title ?? "Quản lý sản phẩm";
+$title = $title ?? "Sửa sản phẩm";
 
-// Lấy danh sách sản phẩm từ model
-$products = $products ?? []; // Từ controller
+// Giả định $product là dữ liệu sản phẩm từ controller (lấy theo ID)
+$product = $product ?? ['id' => '', 'name' => '', 'price' => '', 'category_id' => '', 'description' => '', 'image' => ''];
+// Lấy danh sách danh mục
+$categories = $categories ?? [];
 ?>
 
 <!DOCTYPE html>
@@ -20,11 +22,11 @@ $products = $products ?? []; // Từ controller
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #000000;
-            color: #FFFFFF;
+            background-color: #000000; /* Nền đen */
+            color: #FFFFFF; /* Chữ trắng */
         }
         .sidebar {
-            background-color: #000000;
+            background-color: #000000; /* Nền sidebar đen */
             height: 100vh;
             position: fixed;
             width: 250px;
@@ -47,24 +49,22 @@ $products = $products ?? []; // Từ controller
             display: flex;
             justify-content: flex-end;
         }
-        .table {
+        .form-control {
             background-color: #222222;
             color: #FFFFFF;
-        }
-        .table th, .table td {
             border-color: #555555;
         }
-        .btn-success {
+        .btn-primary {
             background-color: #FFFFFF;
             color: #000000;
         }
-        .btn-success:hover {
+        .btn-primary:hover {
             background-color: #CCCCCC;
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
+    <!-- Sidebar (giống add-product.php) -->
     <div class="sidebar">
         <div class="text-center mb-4">
             <img src="https://via.placeholder.com/150x50?text=Logo" alt="Logo" class="img-fluid">
@@ -90,6 +90,7 @@ $products = $products ?? []; // Từ controller
 
     <!-- Nội dung -->
     <div class="content">
+        <!-- Header top -->
         <div class="header-top">
             <a href="#" class="me-3">
                 <i class="bi bi-bell"></i> Thông báo <span class="badge bg-danger">3</span>
@@ -105,36 +106,36 @@ $products = $products ?? []; // Từ controller
             </div>
         </div>
 
-        <h2>Sản phẩm</h2>
-        <div class="d-flex justify-content-end mb-3">
-            <a href="index.php?act=add-product" class="btn btn-success">Add Product</a>
-        </div>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Tên sản phẩm</th>
-                    <th>Giá</th>
-                    <th>Danh mục</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($products as $product): ?>
-                    <tr>
-                        <td><?php echo $product['id']; ?></td>
-                        <td><?php echo $product['name']; ?></td>
-                        <td><?php echo number_format($product['price'], 0, ',', '.') . ' VNĐ'; ?></td>
-                        <td><?php echo $product['category_name']; ?></td>
-                        <td>
-                            <a href="index.php?act=view-product&id=<?php echo $product['id']; ?>" class="btn btn-info btn-sm">Xem</a> <!-- Liên kết xem chi tiết -->
-                            <a href="index.php?act=edit-product&id=<?php echo $product['id']; ?>" class="btn btn-primary btn-sm">Sửa</a>
-                            <a href="index.php?act=delete-product&id=<?php echo $product['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+        <!-- Form sửa sản phẩm -->
+        <h2>Sửa sản phẩm</h2>
+        <form action="index.php?act=edit-product&id=<?php echo $product['id']; ?>" method="POST" enctype="multipart/form-data"> <!-- Action dẫn đến controller xử lý sửa -->
+            <div class="mb-3">
+                <label for="name" class="form-label">Tên sản phẩm</label>
+                <input type="text" class="form-control" id="name" name="name" value="<?php echo $product['name']; ?>" required> <!-- Giá trị từ dữ liệu sản phẩm -->
+            </div>
+            <div class="mb-3">
+                <label for="price" class="form-label">Giá</label>
+                <input type="number" class="form-control" id="price" name="price" value="<?php echo $product['price']; ?>" required>
+            </div>
+            <div class="mb-3">
+                <label for="category_id" class="form-label">Danh mục</label>
+                <select class="form-select" id="category_id" name="category_id" required>
+                    <option value="">Chọn danh mục</option>
+                    <?php foreach ($categories as $category): ?>
+                        <option value="<?php echo $category['id']; ?>" <?php if ($category['id'] == $product['category_id']) echo 'selected'; ?>><?php echo $category['name']; ?></option> <!-- Selected nếu trùng -->
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Mô tả</label>
+                <textarea class="form-control" id="description" name="description" rows="5"><?php echo $product['description']; ?></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="image" class="form-label">Hình ảnh (hiện tại: <?php echo $product['image']; ?>)</label>
+                <input type="file" class="form-control" id="image" name="image"> <!-- Upload ảnh mới, hiển thị tên ảnh hiện tại -->
+            </div>
+            <button type="submit" class="btn btn-primary">Cập nhật sản phẩm</button>
+        </form>
     </div>
 
     <!-- Bootstrap JS và Icons -->

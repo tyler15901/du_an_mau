@@ -6,7 +6,13 @@ if (!isset($_SESSION['admin_id'])) {
     exit();
 }
 $title = $title ?? "Quản lý người dùng";
-$users = $users ?? []; // Danh sách người dùng từ model
+
+// Lấy danh sách người dùng từ model (giả định, bạn có thể mở rộng trong UserModel.php)
+$users = [
+    ['id' => 1, 'name' => 'User1', 'email' => 'user1@example.com', 'created_at' => '2025-08-07'],
+    ['id' => 2, 'name' => 'User2', 'email' => 'user2@example.com', 'created_at' => '2025-08-06'],
+    // Thêm dữ liệu từ CSDL thực tế
+];
 ?>
 
 <!DOCTYPE html>
@@ -19,37 +25,96 @@ $users = $users ?? []; // Danh sách người dùng từ model
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #000000; /* Nền đen */
-            color: #FFFFFF; /* Chữ trắng */
+            background-color: #000000;
+            color: #FFFFFF;
         }
-        .admin-panel {
-            background-color: #1a1a1a; /* Nền panel màu xám đậm */
+        .sidebar {
+            background-color: #000000;
+            height: 100vh;
+            position: fixed;
+            width: 250px;
+            padding-top: 20px;
+        }
+        .sidebar a {
+            color: #FFFFFF;
+            text-decoration: none;
+        }
+        .sidebar a:hover {
+            color: #CCCCCC;
+        }
+        .content {
+            margin-left: 250px;
             padding: 20px;
-            border: 1px solid #555555; /* Viền xám */
+        }
+        .header-top {
+            background-color: #1a1a1a;
+            padding: 10px;
+            display: flex;
+            justify-content: flex-end;
         }
         .table {
-            background-color: #222222; /* Nền bảng */
-            color: #FFFFFF; /* Chữ trắng */
+            background-color: #222222;
+            color: #FFFFFF;
         }
         .table th, .table td {
-            border-color: #555555; /* Viền bảng */
+            border-color: #555555;
         }
-        .btn {
-            background-color: #FFFFFF; /* Nút trắng */
-            color: #000000; /* Chữ đen trên nút */
+        .btn-success {
+            background-color: #FFFFFF;
+            color: #000000;
         }
-        .btn:hover {
-            background-color: #CCCCCC; /* Nút xám nhạt khi hover */
+        .btn-success:hover {
+            background-color: #CCCCCC;
         }
     </style>
 </head>
 <body>
-    <!-- Header Admin -->
-    <?php include 'header-admin.php'; ?>
+    <!-- Sidebar bên trái -->
+    <div class="sidebar">
+        <div class="text-center mb-4">
+            <img src="https://via.placeholder.com/150x50?text=Logo" alt="Logo" class="img-fluid">
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="index.php?act=admin-dashboard">Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="index.php?act=admin-categories">Danh mục sản phẩm</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="index.php?act=admin-users">Người dùng</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="index.php?act=admin-comments">Bình luận</a>
+            </li>
+        </ul>
+        <div class="position-absolute bottom-0 w-100 p-3">
+            <a href="index.php?act=admin-logout" class="btn btn-danger w-100">Log out</a>
+        </div>
+    </div>
 
-    <!-- Users Management -->
-    <div class="container mt-4 admin-panel">
-        <h2>Quản lý người dùng</h2>
+    <!-- Nội dung bên phải -->
+    <div class="content">
+        <div class="header-top">
+            <a href="#" class="me-3">
+                <i class="bi bi-bell"></i> Thông báo <span class="badge bg-danger">3</span>
+            </a>
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">
+                    <i class="bi bi-person"></i> Admin
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <li><a class="dropdown-item" href="#">Profile</a></li>
+                    <li><a class="dropdown-item" href="index.php?act=admin-logout">Log out</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Khu vực quản lý người dùng -->
+        <h2>Người dùng</h2>
+        <div class="d-flex justify-content-end mb-3">
+            <a href="index.php?act=add-user" class="btn btn-success">Add User</a>
+        </div>
         <table class="table">
             <thead>
                 <tr>
@@ -63,13 +128,13 @@ $users = $users ?? []; // Danh sách người dùng từ model
             <tbody>
                 <?php foreach ($users as $user): ?>
                     <tr>
-                        <td><?php echo $user['id'] ?? ''; ?></td>
-                        <td><?php echo $user['name'] ?? ''; ?></td>
-                        <td><?php echo $user['email'] ?? ''; ?></td>
-                        <td><?php echo $user['created_at'] ?? ''; ?></td>
+                        <td><?php echo $user['id']; ?></td>
+                        <td><?php echo $user['name']; ?></td>
+                        <td><?php echo $user['email']; ?></td>
+                        <td><?php echo $user['created_at']; ?></td>
                         <td>
-                            <a href="index.php?act=edit-user&id=<?php echo $user['id'] ?? ''; ?>" class="btn btn-primary btn-sm">Sửa</a>
-                            <a href="index.php?act=delete-user&id=<?php echo $user['id'] ?? ''; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
+                            <a href="index.php?act=edit-user&id=<?php echo $user['id']; ?>" class="btn btn-primary btn-sm">Sửa</a>
+                            <a href="index.php?act=delete-user&id=<?php echo $user['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -77,10 +142,8 @@ $users = $users ?? []; // Danh sách người dùng từ model
         </table>
     </div>
 
-    <!-- Footer -->
-    <?php include '../layouts/footer.php'; ?>
-
-    <!-- Bootstrap JS -->
+    <!-- Bootstrap JS và Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

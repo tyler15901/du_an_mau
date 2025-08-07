@@ -7,11 +7,12 @@ if (!isset($_SESSION['admin_id'])) {
 }
 $title = $title ?? "Bảng điều khiển Admin";
 
-// Lấy dữ liệu từ model (giả định các model đã được khởi tạo trong controller)
-$categories = $categories ?? []; // Danh sách danh mục
-$products = $products ?? []; // Danh sách sản phẩm
-$users = $users ?? []; // Danh sách người dùng
-$comments = $comments ?? []; // Danh sách bình luận
+// Lấy dữ liệu thống kê từ model (giả định, bạn có thể mở rộng trong AdminModel.php)
+$viewCount = 1000; // Lượt xem sản phẩm (lấy từ CSDL)
+$saleCount = 200; // Lượt bán (lấy từ CSDL)
+$conversionRate = ($saleCount / $viewCount) * 100; // Tỷ lệ chuyển đổi
+$currentDate = date('d/m/Y'); // Ngày tháng hiện tại
+$balance = 50000000; // Số dư (giả định, đơn vị VNĐ)
 ?>
 
 <!DOCTYPE html>
@@ -20,134 +21,144 @@ $comments = $comments ?? []; // Danh sách bình luận
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $title; ?></title>
-    <!-- Bootstrap CSS -->
+    <!-- Bootstrap CSS để sử dụng grid và nav -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        /* Tùy chỉnh phong cách đen trắng toàn trang */
         body {
             background-color: #000000; /* Nền đen */
             color: #FFFFFF; /* Chữ trắng */
         }
-        .navbar {
-            background-color: #333333; /* Navbar tối hơn */
+        .sidebar {
+            background-color: #000000; /* Nền sidebar đen */
+            height: 100vh; /* Chiều cao full màn hình */
+            position: fixed; /* Cố định bên trái */
+            width: 250px; /* Chiều rộng sidebar */
+            padding-top: 20px;
         }
-        .admin-panel {
-            background-color: #1a1a1a; /* Nền panel màu xám đậm */
+        .sidebar a {
+            color: #FFFFFF; /* Chữ trắng trong menu */
+            text-decoration: none;
+        }
+        .sidebar a:hover {
+            color: #CCCCCC; /* Màu xám nhạt khi hover */
+        }
+        .content {
+            margin-left: 250px; /* Khoảng cách để tránh che sidebar */
             padding: 20px;
+        }
+        .header-top {
+            background-color: #1a1a1a; /* Nền header xám đậm */
+            padding: 10px;
+            display: flex;
+            justify-content: flex-end; /* Căn phải */
+        }
+        .stats-card {
+            background-color: #222222; /* Nền card xám tối */
             border: 1px solid #555555; /* Viền xám */
+            padding: 15px;
+            margin-bottom: 20px;
         }
-        .table {
-            background-color: #222222; /* Nền bảng */
-            color: #FFFFFF; /* Chữ trắng */
+        .btn-success {
+            background-color: #FFFFFF; /* Nút trắng để phù hợp đen trắng */
+            color: #000000;
         }
-        .table th, .table td {
-            border-color: #555555; /* Viền bảng */
-        }
-        .btn {
-            background-color: #FFFFFF; /* Nút trắng */
-            color: #000000; /* Chữ đen trên nút */
-        }
-        .btn:hover {
-            background-color: #CCCCCC; /* Nút xám nhạt khi hover */
+        .btn-success:hover {
+            background-color: #CCCCCC;
         }
     </style>
 </head>
 <body>
-    <!-- Header Admin -->
-    <nav class="navbar navbar-expand-lg">
-        <div class="container">
-            <a class="navbar-brand" href="index.php?act=admin">Admin Panel</a>
-            <div class="navbar-nav ms-auto">
-                <span class="navbar-text me-3">Xin chào, <?php echo $_SESSION['admin_name'] ?? 'Admin'; ?>!</span>
-                <a href="index.php?act=admin-logout" class="btn btn-danger">Đăng xuất</a>
-            </div>
+    <!-- Sidebar bên trái: Thanh menu dọc -->
+    <div class="sidebar">
+        <!-- Logo trên cùng (thay bằng logo của bạn) -->
+        <div class="text-center mb-4">
+            <img src="https://via.placeholder.com/150x50?text=Logo" alt="Logo" class="img-fluid">
         </div>
-    </nav>
-
-    <!-- Admin Dashboard with Unified Table -->
-    <div class="container mt-4 admin-panel">
-        <h2>Bảng điều khiển</h2>
-        <p>Quản lý nhanh các loại dữ liệu. Nhấn vào "Quản lý chi tiết" để xem toàn bộ hoặc thực hiện thêm/sửa.</p>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Loại</th>
-                    <th>ID</th>
-                    <th>Tên</th>
-                    <th>Thông tin thêm</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Danh mục -->
-                <?php foreach ($categories as $category): ?>
-                    <tr>
-                        <td>Danh mục</td>
-                        <td><?php echo $category['id'] ?? ''; ?></td>
-                        <td><?php echo $category['name'] ?? ''; ?></td>
-                        <td>-</td>
-                        <td>
-                            <a href="index.php?act=admin-categories" class="btn btn-info btn-sm me-1">Quản lý chi tiết</a>
-                            <a href="index.php?act=edit-category&id=<?php echo $category['id'] ?? ''; ?>" class="btn btn-primary btn-sm">Sửa</a>
-                            <a href="index.php?act=delete-category&id=<?php echo $category['id'] ?? ''; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-
-                <!-- Sản phẩm -->
-                <?php foreach ($products as $product): ?>
-                    <tr>
-                        <td>Sản phẩm</td>
-                        <td><?php echo $product['id'] ?? ''; ?></td>
-                        <td><?php echo $product['name'] ?? ''; ?></td>
-                        <td><?php echo number_format($product['price'] ?? 0, 0, ',', '.') . ' VNĐ'; ?></td>
-                        <td>
-                            <a href="index.php?act=admin-products" class="btn btn-info btn-sm me-1">Quản lý chi tiết</a>
-                            <a href="index.php?act=edit-product&id=<?php echo $product['id'] ?? ''; ?>" class="btn btn-primary btn-sm">Sửa</a>
-                            <a href="index.php?act=delete-product&id=<?php echo $product['id'] ?? ''; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-
-                <!-- Người dùng -->
-                <?php foreach ($users as $user): ?>
-                    <tr>
-                        <td>Người dùng</td>
-                        <td><?php echo $user['id'] ?? ''; ?></td>
-                        <td><?php echo $user['name'] ?? ''; ?></td>
-                        <td><?php echo $user['email'] ?? ''; ?></td>
-                        <td>
-                            <a href="index.php?act=admin-users" class="btn btn-info btn-sm me-1">Quản lý chi tiết</a>
-                            <a href="index.php?act=edit-user&id=<?php echo $user['id'] ?? ''; ?>" class="btn btn-primary btn-sm">Sửa</a>
-                            <a href="index.php?act=delete-user&id=<?php echo $user['id'] ?? ''; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-
-                <!-- Bình luận -->
-                <?php foreach ($comments as $comment): ?>
-                    <tr>
-                        <td>Bình luận</td>
-                        <td><?php echo $comment['id'] ?? ''; ?></td>
-                        <td><?php echo $comment['user'] ?? ''; ?></td>
-                        <td><?php echo $comment['content'] ?? ''; ?></td>
-                        <td>
-                            <a href="index.php?act=admin-comments" class="btn btn-info btn-sm me-1">Quản lý chi tiết</a>
-                            <a href="index.php?act=delete-comment&id=<?php echo $comment['id'] ?? ''; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-        <div class="mt-3">
-            <a href="index.php?act=add-category" class="btn btn-success me-2">Thêm danh mục</a>
-            <a href="index.php?act=add-product" class="btn btn-success">Thêm sản phẩm</a>
+        <!-- Menu các mục -->
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="index.php?act=admin-dashboard">Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="index.php?act=admin-categories">Danh mục sản phẩm</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="index.php?act=admin-users">Người dùng</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="index.php?act=admin-comments">Bình luận</a>
+            </li>
+        </ul>
+        <!-- Nút đăng xuất dưới cùng -->
+        <div class="position-absolute bottom-0 w-100 p-3">
+            <a href="index.php?act=admin-logout" class="btn btn-danger w-100">Log out</a>
         </div>
     </div>
 
-    <!-- Footer -->
-    <?php include '../layouts/footer.php'; ?>
+    <!-- Nội dung bên phải -->
+    <div class="content">
+        <!-- Header trên đầu bên phải: Thông báo và người dùng -->
+        <div class="header-top">
+            <!-- Thông báo (giả định, có thể thêm badge cho số lượng) -->
+            <a href="#" class="me-3">
+                <i class="bi bi-bell"></i> Thông báo <span class="badge bg-danger">3</span>
+            </a>
+            <!-- Người dùng dropdown -->
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">
+                    <i class="bi bi-person"></i> Admin
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <li><a class="dropdown-item" href="#">Profile</a></li>
+                    <li><a class="dropdown-item" href="index.php?act=admin-logout">Log out</a></li>
+                </ul>
+            </div>
+        </div>
 
-    <!-- Bootstrap JS -->
+        <!-- Khu vực thống kê -->
+        <h2>Thống kê</h2>
+        <div class="row">
+            <!-- Card lượt xem sản phẩm -->
+            <div class="col-md-4">
+                <div class="stats-card">
+                    <h4>Lượt xem sản phẩm</h4>
+                    <p><?php echo $viewCount; ?></p>
+                </div>
+            </div>
+            <!-- Card lượt bán -->
+            <div class="col-md-4">
+                <div class="stats-card">
+                    <h4>Lượt bán</h4>
+                    <p><?php echo $saleCount; ?></p>
+                </div>
+            </div>
+            <!-- Card tỷ lệ chuyển đổi -->
+            <div class="col-md-4">
+                <div class="stats-card">
+                    <h4>Tỷ lệ chuyển đổi</h4>
+                    <p><?php echo number_format($conversionRate, 2); ?>%</p>
+                </div>
+            </div>
+            <!-- Card ngày tháng -->
+            <div class="col-md-4">
+                <div class="stats-card">
+                    <h4>Ngày tháng</h4>
+                    <p><?php echo $currentDate; ?></p>
+                </div>
+            </div>
+            <!-- Card số dư -->
+            <div class="col-md-4">
+                <div class="stats-card">
+                    <h4>Số dư</h4>
+                    <p><?php echo number_format($balance, 0, ',', '.') . ' VNĐ'; ?></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS và Bootstrap Icons (cho icon bell và person) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

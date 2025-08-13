@@ -1,143 +1,191 @@
 <?php
-// Kiểm tra session để xác thực admin
-session_start();
-if (!isset($_SESSION['admin_id'])) {
-    header("Location: index.php?act=login");
-    exit();
-}
-$title = $title ?? "Thêm sản phẩm";
-
-// Lấy danh sách danh mục từ model để chọn (giả định từ controller truyền vào)
-$categories = $categories ?? []; // Mảng danh mục từ CategoryModel
+$pageTitle = 'Thêm sản phẩm';
+$currentPage = 'products';
+ob_start();
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $title; ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #000000; /* Nền đen toàn trang */
-            color: #FFFFFF; /* Chữ trắng */
-        }
-        .sidebar {
-            background-color: #000000; /* Nền sidebar đen */
-            height: 100vh; /* Full chiều cao */
-            position: fixed; /* Cố định bên trái */
-            width: 250px; /* Chiều rộng */
-            padding-top: 20px; /* Khoảng cách trên */
-        }
-        .sidebar a {
-            color: #FFFFFF; /* Chữ trắng menu */
-            text-decoration: none; /* Không gạch chân */
-        }
-        .sidebar a:hover {
-            color: #CCCCCC; /* Xám nhạt khi hover */
-        }
-        .content {
-            margin-left: 250px; /* Khoảng cách tránh che sidebar */
-            padding: 20px; /* Padding nội dung */
-        }
-        .header-top {
-            background-color: #1a1a1a; /* Nền header xám đậm */
-            padding: 10px; /* Padding */
-            display: flex; /* Flex để căn phải */
-            justify-content: flex-end; /* Căn phải */
-        }
-        .form-control {
-            background-color: #222222; /* Nền input xám tối */
-            color: #FFFFFF; /* Chữ trắng */
-            border-color: #555555; /* Viền xám */
-        }
-        .btn-primary {
-            background-color: #FFFFFF; /* Nút trắng */
-            color: #000000; /* Chữ đen */
-        }
-        .btn-primary:hover {
-            background-color: #CCCCCC; /* Xám nhạt khi hover */
-        }
-    </style>
-</head>
-<body>
-    <!-- Sidebar bên trái (giống các trang admin khác) -->
-    <div class="sidebar">
-        <div class="text-center mb-4">
-            <img src="https://via.placeholder.com/150x50?text=Logo" alt="Logo" class="img-fluid"> <!-- Logo, thay bằng logo thực -->
-        </div>
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" href="index.php?act=admin-dashboard">Dashboard</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="index.php?act=admin-categories">Danh mục sản phẩm</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="index.php?act=admin-users">Người dùng</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="index.php?act=admin-comments">Bình luận</a>
-            </li>
-        </ul>
-        <div class="position-absolute bottom-0 w-100 p-3">
-            <a href="index.php?act=admin-logout" class="btn btn-danger w-100">Log out</a> <!-- Nút logout dưới cùng -->
-        </div>
+<div class="page-header">
+    <h1 class="page-title">Thêm sản phẩm mới</h1>
+    <p class="page-subtitle">Điền thông tin sản phẩm</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-plus me-2"></i>Thông tin sản phẩm</h5>
     </div>
-
-    <!-- Nội dung bên phải -->
-    <div class="content">
-        <!-- Header trên đầu bên phải -->
-        <div class="header-top">
-            <a href="#" class="me-3">
-                <i class="bi bi-bell"></i> Thông báo <span class="badge bg-danger">3</span> <!-- Icon thông báo với badge -->
-            </a>
-            <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">
-                    <i class="bi bi-person"></i> Admin <!-- Icon người dùng -->
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Tên sản phẩm *</label>
+                        <input type="text" class="form-control" id="name" name="name" required 
+                               value="<?= isset($_POST['name']) ? htmlspecialchars($_POST['name']) : '' ?>">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="category_id" class="form-label">Danh mục *</label>
+                                <select class="form-select" id="category_id" name="category_id" required>
+                                    <option value="">Chọn danh mục</option>
+                                    <?php foreach ($categories as $category): ?>
+                                    <option value="<?= $category['id'] ?>" 
+                                            <?= (isset($_POST['category_id']) && $_POST['category_id'] == $category['id']) ? 'selected' : '' ?>>
+                                        <?= $category['name'] ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Giá (VNĐ) *</label>
+                                <input type="number" class="form-control" id="price" name="price" required min="0"
+                                       value="<?= isset($_POST['price']) ? $_POST['price'] : '' ?>">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="stock" class="form-label">Số lượng tồn kho *</label>
+                                <input type="number" class="form-control" id="stock" name="stock" required min="0"
+                                       value="<?= isset($_POST['stock']) ? $_POST['stock'] : '0' ?>">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="image" class="form-label">Hình ảnh *</label>
+                                <input type="file" class="form-control" id="image" name="image" required 
+                                       accept="image/*">
+                                <div class="form-text">Chọn file ảnh (JPG, PNG, GIF)</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Mô tả sản phẩm</label>
+                        <textarea class="form-control" id="description" name="description" rows="5"
+                                  placeholder="Mô tả chi tiết về sản phẩm..."><?= isset($_POST['description']) ? htmlspecialchars($_POST['description']) : '' ?></textarea>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-image me-2"></i>Xem trước ảnh</h6>
+                        </div>
+                        <div class="card-body text-center">
+                            <div id="imagePreview" class="mb-3" style="display: none;">
+                                <img id="previewImg" src="" alt="Preview" 
+                                     style="max-width: 100%; max-height: 200px; border-radius: 8px;">
+                            </div>
+                            <div id="noImage" class="text-muted">
+                                <i class="fas fa-image" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                                <p>Chưa có ảnh</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Thông tin</h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled mb-0">
+                                <li><i class="fas fa-check text-success me-2"></i>Slug sẽ được tạo tự động</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Ảnh sẽ được resize tự động</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Hỗ trợ SEO friendly URL</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <div class="d-flex justify-content-between">
+                <a href="<?= BASE_URL ?>admin/products" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Quay lại
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Lưu sản phẩm
                 </button>
-                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                    <li><a class="dropdown-item" href="#">Profile</a></li>
-                    <li><a class="dropdown-item" href="index.php?act=admin-logout">Log out</a></li>
-                </ul>
             </div>
-        </div>
-
-        <!-- Form thêm sản phẩm -->
-        <h2>Thêm sản phẩm</h2>
-        <form action="index.php?act=add-product" method="POST" enctype="multipart/form-data"> <!-- Action dẫn đến controller xử lý thêm, enctype cho upload ảnh -->
-            <div class="mb-3">
-                <label for="name" class="form-label">Tên sản phẩm</label>
-                <input type="text" class="form-control" id="name" name="name" required> <!-- Input tên sản phẩm -->
-            </div>
-            <div class="mb-3">
-                <label for="price" class="form-label">Giá</label>
-                <input type="number" class="form-control" id="price" name="price" required> <!-- Input giá -->
-            </div>
-            <div class="mb-3">
-                <label for="category_id" class="form-label">Danh mục</label>
-                <select class="form-select" id="category_id" name="category_id" required> <!-- Select danh mục -->
-                    <option value="">Chọn danh mục</option>
-                    <?php foreach ($categories as $category): ?>
-                        <option value="<?php echo $category['id']; ?>"><?php echo $category['name']; ?></option> <!-- Lặp danh mục từ mảng -->
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label for="description" class="form-label">Mô tả</label>
-                <textarea class="form-control" id="description" name="description" rows="5"></textarea> <!-- Textarea mô tả -->
-            </div>
-            <div class="mb-3">
-                <label for="image" class="form-label">Hình ảnh</label>
-                <input type="file" class="form-control" id="image" name="image"> <!-- Input upload ảnh -->
-            </div>
-            <button type="submit" class="btn btn-primary">Thêm sản phẩm</button> <!-- Nút submit -->
         </form>
     </div>
+</div>
 
-    <!-- Bootstrap JS và Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<script>
+// Image preview
+document.getElementById('image').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('imagePreview');
+    const noImage = document.getElementById('noImage');
+    const previewImg = document.getElementById('previewImg');
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+            noImage.style.display = 'none';
+        }
+        reader.readAsDataURL(file);
+    } else {
+        preview.style.display = 'none';
+        noImage.style.display = 'block';
+    }
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const name = document.getElementById('name').value.trim();
+    const category = document.getElementById('category_id').value;
+    const price = document.getElementById('price').value;
+    const stock = document.getElementById('stock').value;
+    const image = document.getElementById('image').files[0];
+    
+    if (!name) {
+        e.preventDefault();
+        alert('Vui lòng nhập tên sản phẩm');
+        document.getElementById('name').focus();
+        return false;
+    }
+    
+    if (!category) {
+        e.preventDefault();
+        alert('Vui lòng chọn danh mục');
+        document.getElementById('category_id').focus();
+        return false;
+    }
+    
+    if (!price || price <= 0) {
+        e.preventDefault();
+        alert('Vui lòng nhập giá hợp lệ');
+        document.getElementById('price').focus();
+        return false;
+    }
+    
+    if (stock < 0) {
+        e.preventDefault();
+        alert('Số lượng tồn kho không được âm');
+        document.getElementById('stock').focus();
+        return false;
+    }
+    
+    if (!image) {
+        e.preventDefault();
+        alert('Vui lòng chọn hình ảnh sản phẩm');
+        document.getElementById('image').focus();
+        return false;
+    }
+});
+</script>
+
+<?php
+$content = ob_get_clean();
+include 'admin/views/layout.php';
+?>

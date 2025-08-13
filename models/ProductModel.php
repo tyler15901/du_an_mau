@@ -1,247 +1,222 @@
 <?php
+require_once 'commons/env.php';
+require_once 'commons/function.php';
+
 class ProductModel {
-    private $pdo;
-
-    public function __construct($pdo) {
-        $this->pdo = $pdo;
+    private $conn;
+    
+    public function __construct() {
+        $this->conn = connectDB();
     }
-
-    public function getAllProducts($limit = null, $offset = 0) {
-        $sql = "SELECT p.*, c.name as category_name FROM products p
-                JOIN categories c ON p.category_id = c.id
+    
+    // Lấy tất cả sản phẩm
+    public function getAllProducts($limit = null, $offset = null) {
+        $sql = "SELECT p.*, c.name as category_name 
+                FROM products p 
+                JOIN categories c ON p.category_id = c.id 
                 ORDER BY p.id DESC";
         
         if ($limit) {
-            $sql .= " LIMIT ? OFFSET ?";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$limit, $offset]);
-        } else {
-            $stmt = $this->pdo->query($sql);
-        }
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getProductById($id) {
-        $sql = "SELECT p.*, c.name as category_name FROM products p
-                JOIN categories c ON p.category_id = c.id
-                WHERE p.id = ?";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
-    public function getProductBySlug($slug) {
-        $sql = "SELECT p.*, c.name as category_name FROM products p
-                JOIN categories c ON p.category_id = c.id
-                WHERE p.slug = ?";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$slug]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
-    public function getProductsWithFilter($search = '', $category = '', $price_range = 'all', $limit = null, $offset = 0) {
-        $sql = "SELECT p.*, c.name as category_name FROM products p
-                JOIN categories c ON p.category_id = c.id
-                WHERE 1=1";
-        $params = [];
-
-        // Tìm kiếm theo tên sản phẩm
-        if (!empty($search)) {
-            $sql .= " AND p.name LIKE ?";
-            $params[] = "%$search%";
-        }
-
-        // Lọc theo danh mục
-        if (!empty($category)) {
-            $sql .= " AND p.category_id = ?";
-            $params[] = $category;
-        }
-
-        // Lọc theo khoảng giá
-        if ($price_range !== 'all') {
-            switch ($price_range) {
-                case '0-500000':
-                    $sql .= " AND p.price <= 500000";
-                    break;
-                case '500000-1000000':
-                    $sql .= " AND p.price > 500000 AND p.price <= 1000000";
-                    break;
-                case '1000000':
-                    $sql .= " AND p.price > 1000000";
-                    break;
+            $sql .= " LIMIT $limit";
+            if ($offset) {
+                $sql .= " OFFSET $offset";
             }
         }
-
-        $sql .= " ORDER BY p.id DESC";
         
-        if ($limit) {
-            $sql .= " LIMIT ? OFFSET ?";
-            $params[] = $limit;
-            $params[] = $offset;
-        }
-        
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
-
-    public function getProductsByCategory($category_id, $limit = null, $offset = 0) {
-        $sql = "SELECT p.*, c.name as category_name FROM products p
-                JOIN categories c ON p.category_id = c.id
-                WHERE p.category_id = ?
+    
+    // Lấy sản phẩm theo danh mục
+    public function getProductsByCategory($categoryId, $limit = null, $offset = null) {
+        $sql = "SELECT p.*, c.name as category_name 
+                FROM products p 
+                JOIN categories c ON p.category_id = c.id 
+                WHERE p.category_id = :category_id 
                 ORDER BY p.id DESC";
         
         if ($limit) {
-            $sql .= " LIMIT ? OFFSET ?";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$category_id, $limit, $offset]);
-        } else {
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$category_id]);
+            $sql .= " LIMIT $limit";
+            if ($offset) {
+                $sql .= " OFFSET $offset";
+            }
         }
         
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':category_id', $categoryId);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
-
-    public function getRelatedProducts($category_id, $exclude_id, $limit = 4) {
-        $sql = "SELECT p.*, c.name as category_name FROM products p
-                JOIN categories c ON p.category_id = c.id
-                WHERE p.category_id = ? AND p.id != ?
-                ORDER BY p.id DESC
-                LIMIT ?";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$category_id, $exclude_id, $limit]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Lấy sản phẩm theo slug
+    public function getProductBySlug($slug) {
+        $sql = "SELECT p.*, c.name as category_name 
+                FROM products p 
+                JOIN categories c ON p.category_id = c.id 
+                WHERE p.slug = :slug";
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':slug', $slug);
+        $stmt->execute();
+        return $stmt->fetch();
     }
-
-    public function searchProducts($keyword, $limit = null, $offset = 0) {
-        $sql = "SELECT p.*, c.name as category_name FROM products p
-                JOIN categories c ON p.category_id = c.id
-                WHERE p.name LIKE ? OR p.description LIKE ?
+    
+    // Lấy sản phẩm theo ID
+    public function getProductById($id) {
+        $sql = "SELECT p.*, c.name as category_name 
+                FROM products p 
+                JOIN categories c ON p.category_id = c.id 
+                WHERE p.id = :id";
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+    
+    // Tìm kiếm sản phẩm
+    public function searchProducts($keyword, $limit = null, $offset = null) {
+        $sql = "SELECT p.*, c.name as category_name 
+                FROM products p 
+                JOIN categories c ON p.category_id = c.id 
+                WHERE p.name LIKE :keyword OR p.description LIKE :keyword 
                 ORDER BY p.id DESC";
         
         if ($limit) {
-            $sql .= " LIMIT ? OFFSET ?";
-            $stmt = $this->pdo->prepare($sql);
-            $searchTerm = "%$keyword%";
-            $stmt->execute([$searchTerm, $searchTerm, $limit, $offset]);
-        } else {
-            $stmt = $this->pdo->prepare($sql);
-            $searchTerm = "%$keyword%";
-            $stmt->execute([$searchTerm, $searchTerm]);
+            $sql .= " LIMIT $limit";
+            if ($offset) {
+                $sql .= " OFFSET $offset";
+            }
         }
         
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $this->conn->prepare($sql);
+        $keyword = "%$keyword%";
+        $stmt->bindParam(':keyword', $keyword);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
-
-    public function getFeaturedProducts($limit = 8) {
-        $sql = "SELECT p.*, c.name as category_name FROM products p
-                JOIN categories c ON p.category_id = c.id
-                ORDER BY p.id DESC
-                LIMIT ?";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$limit]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getTotalProducts($search = '', $category = '') {
-        $sql = "SELECT COUNT(*) as total FROM products p
-                JOIN categories c ON p.category_id = c.id
-                WHERE 1=1";
-        $params = [];
-
-        if (!empty($search)) {
-            $sql .= " AND p.name LIKE ?";
-            $params[] = "%$search%";
+    
+    // Lọc sản phẩm theo giá
+    public function filterProductsByPrice($minPrice, $maxPrice, $limit = null, $offset = null) {
+        $sql = "SELECT p.*, c.name as category_name 
+                FROM products p 
+                JOIN categories c ON p.category_id = c.id 
+                WHERE p.price BETWEEN :min_price AND :max_price 
+                ORDER BY p.price ASC";
+        
+        if ($limit) {
+            $sql .= " LIMIT $limit";
+            if ($offset) {
+                $sql .= " OFFSET $offset";
+            }
         }
-
-        if (!empty($category)) {
-            $sql .= " AND p.category_id = ?";
-            $params[] = $category;
-        }
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result['total'];
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':min_price', $minPrice);
+        $stmt->bindParam(':max_price', $maxPrice);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
-
+    
     // Thêm sản phẩm mới
     public function addProduct($data) {
-        try {
-            $sql = "INSERT INTO products (name, price, category_id, description, image, stock, slug) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([
-                $data['name'],
-                $data['price'],
-                $data['category_id'],
-                $data['description'],
-                $data['image'],
-                $data['stock'],
-                $data['slug']
-            ]);
-            return $this->pdo->lastInsertId();
-        } catch (PDOException $e) {
-            return false;
-        }
+        $sql = "INSERT INTO products (name, price, category_id, description, image, stock, slug) 
+                VALUES (:name, :price, :category_id, :description, :image, :stock, :slug)";
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':name', $data['name']);
+        $stmt->bindParam(':price', $data['price']);
+        $stmt->bindParam(':category_id', $data['category_id']);
+        $stmt->bindParam(':description', $data['description']);
+        $stmt->bindParam(':image', $data['image']);
+        $stmt->bindParam(':stock', $data['stock']);
+        $stmt->bindParam(':slug', $data['slug']);
+        
+        return $stmt->execute();
     }
-
+    
     // Cập nhật sản phẩm
     public function updateProduct($id, $data) {
-        try {
-            $sql = "UPDATE products SET 
-                    name = ?, price = ?, category_id = ?, description = ?, 
-                    image = ?, stock = ?, slug = ?
-                    WHERE id = ?";
-            $stmt = $this->pdo->prepare($sql);
-            return $stmt->execute([
-                $data['name'],
-                $data['price'],
-                $data['category_id'],
-                $data['description'],
-                $data['image'],
-                $data['stock'],
-                $data['slug'],
-                $id
-            ]);
-        } catch (PDOException $e) {
-            return false;
+        $sql = "UPDATE products 
+                SET name = :name, price = :price, category_id = :category_id, 
+                    description = :description, stock = :stock, slug = :slug";
+        
+        // Chỉ cập nhật ảnh nếu có ảnh mới
+        if (!empty($data['image'])) {
+            $sql .= ", image = :image";
         }
+        
+        $sql .= " WHERE id = :id";
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':name', $data['name']);
+        $stmt->bindParam(':price', $data['price']);
+        $stmt->bindParam(':category_id', $data['category_id']);
+        $stmt->bindParam(':description', $data['description']);
+        $stmt->bindParam(':stock', $data['stock']);
+        $stmt->bindParam(':slug', $data['slug']);
+        $stmt->bindParam(':id', $id);
+        
+        if (!empty($data['image'])) {
+            $stmt->bindParam(':image', $data['image']);
+        }
+        
+        return $stmt->execute();
     }
-
+    
     // Xóa sản phẩm
     public function deleteProduct($id) {
-        try {
-            // Lấy thông tin ảnh trước khi xóa
-            $product = $this->getProductById($id);
+        // Lấy thông tin ảnh trước khi xóa
+        $product = $this->getProductById($id);
+        
+        $sql = "DELETE FROM products WHERE id = :id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':id', $id);
+        
+        if ($stmt->execute()) {
+            // Xóa file ảnh nếu có
             if ($product && !empty($product['image'])) {
-                deleteImage($product['image']);
+                deleteFile($product['image']);
             }
-            
-            $sql = "DELETE FROM products WHERE id = ?";
-            $stmt = $this->pdo->prepare($sql);
-            return $stmt->execute([$id]);
-        } catch (PDOException $e) {
-            return false;
+            return true;
         }
+        return false;
     }
-
-    // Kiểm tra slug tồn tại
-    public function slugExists($slug, $excludeId = null) {
-        $sql = "SELECT COUNT(*) as count FROM products WHERE slug = ?";
-        $params = [$slug];
-        
-        if ($excludeId) {
-            $sql .= " AND id != ?";
-            $params[] = $excludeId;
+    
+    // Đếm tổng số sản phẩm
+    public function countProducts($categoryId = null) {
+        $sql = "SELECT COUNT(*) as total FROM products";
+        if ($categoryId) {
+            $sql .= " WHERE category_id = :category_id";
         }
         
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result['count'] > 0;
+        $stmt = $this->conn->prepare($sql);
+        if ($categoryId) {
+            $stmt->bindParam(':category_id', $categoryId);
+        }
+        $stmt->execute();
+        $result = $stmt->fetch();
+        return $result['total'];
+    }
+    
+    // Tạo slug từ tên sản phẩm
+    public function createSlug($name) {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name)));
+        $slug = preg_replace('/-+/', '-', $slug);
+        $slug = trim($slug, '-');
+        
+        // Kiểm tra slug đã tồn tại chưa
+        $sql = "SELECT COUNT(*) as count FROM products WHERE slug = :slug";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':slug', $slug);
+        $stmt->execute();
+        $result = $stmt->fetch();
+        
+        if ($result['count'] > 0) {
+            $slug .= '-' . time();
+        }
+        
+        return $slug;
     }
 }
-?>

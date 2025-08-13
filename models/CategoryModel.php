@@ -1,138 +1,94 @@
 <?php
-// Có class chứa các function thực thi tương tác với cơ sở dữ liệu cho danh mục
+require_once 'commons/env.php';
+require_once 'commons/function.php';
+
 class CategoryModel {
-    private $pdo;
-
-    public function __construct($pdo) {
-        $this->pdo = $pdo;
+    private $conn;
+    
+    public function __construct() {
+        $this->conn = connectDB();
     }
-
+    
     // Lấy tất cả danh mục
     public function getAllCategories() {
-        try {
-            $sql = "SELECT * FROM categories ORDER BY name ASC";
-            $stmt = $this->pdo->query($sql);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            return [];
-        }
+        $sql = "SELECT * FROM categories ORDER BY id ASC";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
-
+    
     // Lấy danh mục theo ID
     public function getCategoryById($id) {
-        try {
-            $sql = "SELECT * FROM categories WHERE id = ?";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$id]);
-            return $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            return null;
-        }
+        $sql = "SELECT * FROM categories WHERE id = :id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+        return $stmt->fetch();
     }
-
+    
     // Lấy danh mục theo slug
     public function getCategoryBySlug($slug) {
-        try {
-            $sql = "SELECT * FROM categories WHERE slug = ?";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$slug]);
-            return $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            return null;
-        }
+        $sql = "SELECT * FROM categories WHERE slug = :slug";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':slug', $slug);
+        $stmt->execute();
+        return $stmt->fetch();
     }
-
+    
     // Thêm danh mục mới
     public function addCategory($data) {
-        try {
-            $sql = "INSERT INTO categories (name, slug) VALUES (?, ?)";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$data['name'], $data['slug']]);
-            return $this->pdo->lastInsertId();
-        } catch (PDOException $e) {
-            return false;
-        }
+        $sql = "INSERT INTO categories (name, slug) VALUES (:name, :slug)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':name', $data['name']);
+        $stmt->bindParam(':slug', $data['slug']);
+        return $stmt->execute();
     }
-
+    
     // Cập nhật danh mục
     public function updateCategory($id, $data) {
-        try {
-            $sql = "UPDATE categories SET name = ?, slug = ? WHERE id = ?";
-            $stmt = $this->pdo->prepare($sql);
-            return $stmt->execute([$data['name'], $data['slug'], $id]);
-        } catch (PDOException $e) {
-            return false;
-        }
+        $sql = "UPDATE categories SET name = :name, slug = :slug WHERE id = :id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':name', $data['name']);
+        $stmt->bindParam(':slug', $data['slug']);
+        $stmt->bindParam(':id', $id);
+        return $stmt->execute();
     }
-
+    
     // Xóa danh mục
     public function deleteCategory($id) {
-        try {
-            $sql = "DELETE FROM categories WHERE id = ?";
-            $stmt = $this->pdo->prepare($sql);
-            return $stmt->execute([$id]);
-        } catch (PDOException $e) {
-            return false;
-        }
+        $sql = "DELETE FROM categories WHERE id = :id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':id', $id);
+        return $stmt->execute();
     }
-
-    // Kiểm tra slug tồn tại
-    public function slugExists($slug, $excludeId = null) {
-        try {
-            $sql = "SELECT COUNT(*) as count FROM categories WHERE slug = ?";
-            $params = [$slug];
-            
-            if ($excludeId) {
-                $sql .= " AND id != ?";
-                $params[] = $excludeId;
-            }
-            
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute($params);
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $result['count'] > 0;
-        } catch (PDOException $e) {
-            return false;
-        }
+    
+    // Đếm số sản phẩm trong danh mục
+    public function countProductsInCategory($categoryId) {
+        $sql = "SELECT COUNT(*) as total FROM products WHERE category_id = :category_id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':category_id', $categoryId);
+        $stmt->execute();
+        $result = $stmt->fetch();
+        return $result['total'];
     }
-
-    // Lấy tổng số danh mục
-    public function getTotalCategories() {
-        try {
-            $stmt = $this->pdo->query("SELECT COUNT(*) as total FROM categories");
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $result['total'];
-        } catch (PDOException $e) {
-            return 0;
+    
+    // Tạo slug từ tên danh mục
+    public function createSlug($name) {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name)));
+        $slug = preg_replace('/-+/', '-', $slug);
+        $slug = trim($slug, '-');
+        
+        // Kiểm tra slug đã tồn tại chưa
+        $sql = "SELECT COUNT(*) as count FROM categories WHERE slug = :slug";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':slug', $slug);
+        $stmt->execute();
+        $result = $stmt->fetch();
+        
+        if ($result['count'] > 0) {
+            $slug .= '-' . time();
         }
-    }
-
-    // Tìm kiếm danh mục
-    public function searchCategories($keyword) {
-        try {
-            $sql = "SELECT * FROM categories WHERE name LIKE ? ORDER BY name ASC";
-            $stmt = $this->pdo->prepare($sql);
-            $searchTerm = "%$keyword%";
-            $stmt->execute([$searchTerm]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            return [];
-        }
-    }
-
-    // Lấy danh mục có sản phẩm
-    public function getCategoriesWithProducts() {
-        try {
-            $sql = "SELECT c.*, COUNT(p.id) as product_count 
-                    FROM categories c
-                    LEFT JOIN products p ON c.id = p.category_id
-                    GROUP BY c.id
-                    ORDER BY c.name ASC";
-            $stmt = $this->pdo->query($sql);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            return [];
-        }
+        
+        return $slug;
     }
 }
-?>

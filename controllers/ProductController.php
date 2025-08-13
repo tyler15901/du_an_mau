@@ -30,8 +30,8 @@ class ProductController
     public function showHomePage()
     {
         $title = "Chào mừng đến với cửa hàng thời trang nam";
-        $thoiTiet = "Hôm nay trời đẹp, phù hợp để mua sắm!";
-        $products = $this->modelProduct->getAllProducts(); // Lấy data từ model (bây giờ dùng $pdo để query MySQL)
+        $products = $this->modelProduct->getFeaturedProducts(8); // Lấy sản phẩm nổi bật
+        $categories = $this->modelCategory->getAllCategories();
         $sliderItems = [
             ['image' => 'https://via.placeholder.com/1200x300', 'alt' => 'Slider 1', 'title' => 'Sản phẩm mới', 'description' => 'Khám phá ngay!'],
             ['image' => 'https://via.placeholder.com/1200x300', 'alt' => 'Slider 2', 'title' => 'Ưu đãi đặc biệt', 'description' => 'Giảm giá hôm nay!'],
@@ -42,18 +42,35 @@ class ProductController
     public function showProductsPage()
     {
         $title = "Danh sách sản phẩm thời trang nam";
-        $products = $this->modelProduct->getAllProducts();
+        $search = $_GET['search'] ?? '';
+        $category = $_GET['category'] ?? '';
+        $price_range = $_GET['price_range'] ?? 'all';
+        $page = max(1, intval($_GET['page'] ?? 1));
+        $itemsPerPage = 12;
+        $offset = getOffset($page, $itemsPerPage);
+        
+        // Lấy sản phẩm với filter và pagination
+        $products = $this->modelProduct->getProductsWithFilter($search, $category, $price_range, $itemsPerPage, $offset);
         $categories = $this->modelCategory->getAllCategories();
-        require_once './views/products.php';
+        $totalProducts = $this->modelProduct->getTotalProducts($search, $category);
+        $pagination = createPagination($totalProducts, $itemsPerPage, $page, "index.php?act=products&search=$search&category=$category&price_range=$price_range");
+        
+        require_once './views/product.php';
     }
 
     public function showProductDetail($id)
     {
         $title = "Chi tiết sản phẩm";
         $product = $this->modelProduct->getProductById($id);
-        $relatedProducts = $this->modelProduct->getRelatedProducts($product['category_id'] ?? 1, $id);
-        $comments = $this->modelComment->getAllComments(); // Cần lọc theo product_id trong thực tế
-        require_once './views/product-detail.php';
+        
+        if (!$product) {
+            header("Location: index.php?act=products");
+            exit();
+        }
+        
+        $relatedProducts = $this->modelProduct->getRelatedProducts($product['category_id'], $id);
+        $comments = $this->modelComment->getCommentsByProduct($id);
+        require_once './views/product_detail.php';
     }
 
     public function showContactPage()
@@ -80,6 +97,7 @@ class ProductController
 
     public function showLoginPage()
     {
+        session_start();
         $title = "Đăng nhập";
         $errorMessage = "";
         require_once './views/login.php';
@@ -88,22 +106,31 @@ class ProductController
     // Xử lý đăng nhập với validation
     public function login()
     {
+        session_start();
         $errorMessage = "";
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
 
         // Validation: Kiểm tra không trống và email hợp lệ
-        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (empty($email) || !validateEmail($email)) {
             $errorMessage = "Email không hợp lệ!";
         } elseif (empty($password)) {
             $errorMessage = "Mật khẩu không được trống!";
         } else {
-            $user = $this->modelUser->checkLogin($email, $password); // Gọi model, giờ dùng $pdo
+            $user = $this->modelUser->checkLogin($email, $password);
             if ($user) {
-                session_start();
                 $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_name'] = $user['name'];
-                header("Location: index.php");
+                $_SESSION['user_name'] = $user['ho_ten'];
+                $_SESSION['user_email'] = $user['email'];
+                $_SESSION['user_role'] = 'user'; // Mặc định là user
+                
+                // Kiểm tra nếu là admin (email admin@example.com)
+                if ($user['email'] === 'admin@example.com') {
+                    $_SESSION['user_role'] = 'admin';
+                    header("Location: index.php?act=admin-dashboard");
+                } else {
+                    header("Location: index.php");
+                }
                 exit();
             } else {
                 $errorMessage = "Email hoặc mật khẩu không đúng!";
@@ -111,12 +138,13 @@ class ProductController
         }
 
         $title = "Đăng nhập";
-        require_once './views/login.php'; // Require lại view với $errorMessage
+        require_once './views/login.php';
     }
 
-    // Hiển thị trang đăng ký (đã có, thêm $errorMessage nếu có lỗi)
+    // Hiển thị trang đăng ký
     public function showRegisterPage()
     {
+        session_start();
         $title = "Đăng ký";
         $errorMessage = "";
         $successMessage = "";
@@ -126,29 +154,43 @@ class ProductController
     // Xử lý đăng ký với validation
     public function register()
     {
+        session_start();
         $errorMessage = "";
-        $name = $_POST['name'] ?? '';
+        $ho_ten = $_POST['ho_ten'] ?? '';
+        $gioi_tinh = $_POST['gioi_tinh'] ?? '';
+        $ngay_sinh = $_POST['ngay_sinh'] ?? '';
         $email = $_POST['email'] ?? '';
-        $password = $_POST['password'] ?? '';
-        $confirm_password = $_POST['confirm_password'] ?? '';
+        $mat_khau = $_POST['mat_khau'] ?? '';
+        $xac_nhan_mat_khau = $_POST['xac_nhan_mat_khau'] ?? '';
 
-        // Validation: Kiểm tra không trống, email hợp lệ, mật khẩu khớp và >6 ký tự, email chưa tồn tại
-        if (empty($name)) {
-            $errorMessage = "Tên không được trống!";
-        } elseif (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        // Validation
+        if (empty($ho_ten)) {
+            $errorMessage = "Họ tên không được trống!";
+        } elseif (empty($gioi_tinh)) {
+            $errorMessage = "Vui lòng chọn giới tính!";
+        } elseif (empty($ngay_sinh)) {
+            $errorMessage = "Ngày sinh không được trống!";
+        } elseif (empty($email) || !validateEmail($email)) {
             $errorMessage = "Email không hợp lệ!";
-        } elseif (empty($password) || strlen($password) < 6) {
+        } elseif (empty($mat_khau) || !validatePassword($mat_khau)) {
             $errorMessage = "Mật khẩu phải ít nhất 6 ký tự!";
-        } elseif ($password != $confirm_password) {
+        } elseif ($mat_khau != $xac_nhan_mat_khau) {
             $errorMessage = "Mật khẩu không khớp!";
         } else {
             // Kiểm tra email tồn tại
-            if ($this->modelUser->checkEmailExists($email)) { // Hàm mới trong model, cần thêm nếu chưa
+            if ($this->modelUser->emailExists($email)) {
                 $errorMessage = "Email đã tồn tại!";
             } else {
-                if ($this->modelUser->registerUser($name, $email, $password)) { // Gọi model, giờ dùng $pdo để insert
-                    $successMessage = "Đăng ký thành công!";
-                    header("Location: index.php?act=login");
+                $userData = [
+                    'ho_ten' => $ho_ten,
+                    'gioi_tinh' => $gioi_tinh,
+                    'ngay_sinh' => $ngay_sinh,
+                    'email' => $email,
+                    'mat_khau' => $mat_khau
+                ];
+                
+                if ($this->modelUser->registerUser($userData)) {
+                    header("Location: index.php?act=login&success=1");
                     exit();
                 } else {
                     $errorMessage = "Lỗi đăng ký, thử lại!";
@@ -157,19 +199,97 @@ class ProductController
         }
 
         $title = "Đăng ký";
-        require_once './views/register.php'; // Require lại view với $errorMessage
+        require_once './views/register.php';
     }
 
-    // Comment phần code mẫu cho showProductsPage với search/filter (bạn có thể uncomment khi cần)
-    // public function showProductsPage()
-    // {
-    //     $title = "Danh sách sản phẩm thời trang nam";
-    //     $search = $_GET['search'] ?? ''; // Lấy param search từ GET
-    //     $category = $_GET['category'] ?? ''; // Lấy param category
-    //     $price_range = $_GET['price_range'] ?? 'all'; // Lấy param price range
-    //     $products = $this->modelProduct->getAllProducts($search, $category, $price_range); // Gọi hàm getAllProducts với param
-    //     $categories = $this->modelCategory->getAllCategories();
-    //     require_once './views/products.php';
-    // }
+    // Xử lý đăng xuất
+    public function logout()
+    {
+        session_start();
+        session_destroy();
+        header("Location: index.php");
+        exit();
+    }
+
+    // Xử lý giỏ hàng
+    public function showCart()
+    {
+        session_start();
+        if (!isLoggedIn()) {
+            header("Location: index.php?act=login");
+            exit();
+        }
+        
+        $title = "Giỏ hàng";
+        // Logic xử lý giỏ hàng sẽ được thêm sau
+        require_once './views/cart.php';
+    }
+
+    // Xử lý yêu thích
+    public function showWishlist()
+    {
+        session_start();
+        if (!isLoggedIn()) {
+            header("Location: index.php?act=login");
+            exit();
+        }
+        
+        $title = "Sản phẩm yêu thích";
+        // Logic xử lý yêu thích sẽ được thêm sau
+        require_once './views/wishlist.php';
+    }
+
+    // Xử lý hồ sơ
+    public function showProfile()
+    {
+        session_start();
+        if (!isLoggedIn()) {
+            header("Location: index.php?act=login");
+            exit();
+        }
+        
+        $title = "Hồ sơ cá nhân";
+        $user = $this->modelUser->getUserById($_SESSION['user_id']);
+        require_once './views/profile.php';
+    }
+
+    // Xử lý đơn hàng
+    public function showOrders()
+    {
+        session_start();
+        if (!isLoggedIn()) {
+            header("Location: index.php?act=login");
+            exit();
+        }
+        
+        $title = "Đơn hàng của tôi";
+        // Logic xử lý đơn hàng sẽ được thêm sau
+        require_once './views/orders.php';
+    }
+
+    // Thêm bình luận
+    public function addComment()
+    {
+        session_start();
+        if (!isLoggedIn()) {
+            header("Location: index.php?act=login");
+            exit();
+        }
+        
+        $product_id = $_POST['product_id'] ?? 0;
+        $comment = $_POST['comment'] ?? '';
+        
+        if (empty($comment)) {
+            header("Location: index.php?act=product-detail&id=$product_id&error=empty_comment");
+            exit();
+        }
+        
+        if ($this->modelComment->addComment($product_id, $_SESSION['user_id'], $comment)) {
+            header("Location: index.php?act=product-detail&id=$product_id&success=1");
+        } else {
+            header("Location: index.php?act=product-detail&id=$product_id&error=1");
+        }
+        exit();
+    }
 }
 ?>

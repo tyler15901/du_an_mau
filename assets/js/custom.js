@@ -13,7 +13,7 @@ if (searchToggle) {
     searchToggle.addEventListener('click', function() {
         document.querySelector('.search-bar').classList.toggle('d-none');
     });
-};
+}
 
 // AJAX add to cart (gửi POST đến controller)
 function addToCart(productId) {

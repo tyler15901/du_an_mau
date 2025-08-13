@@ -6,10 +6,13 @@ require_once './commons/function.php'; // Hàm hỗ trợ (bao gồm hàm connec
 // Require toàn bộ file Controllers 
 require_once(__DIR__ . '/controllers/ProductController.php');
 require_once(__DIR__ . '/controllers/CategoryController.php');
+require_once(__DIR__ . '/controllers/AdminController.php');
 
 // Require toàn bộ file Models
 require_once(__DIR__ . '/models/ProductModel.php');
 require_once(__DIR__ . '/models/CategoryModel.php'); 
+require_once(__DIR__ . '/models/UserModel.php');
+require_once(__DIR__ . '/models/CommentModel.php');
 
 // Kết nối database MySQL một lần ở entry point (index.php) để tránh connect nhiều lần, tốt cho hiệu suất
 // Giả sử hàm connect_db() ở function.php trả về object PDO (OOP style, an toàn với prepare statement)
@@ -21,42 +24,107 @@ if ($pdo === null) {
 }
 
 $act = $_GET['act'] ?? '/';
-if (isset($_GET['act'])) {
-    switch ($_GET['act']) {
-        case 'products':
-            include 'views/product.php';
-            break;
-        case 'about':
-            include 'views/about.php';
-            break;
-        case 'contact':
-            include 'views/contact.php';
-            break;
-        // ... các case khác
-        default:
-            // Xử lý mặc định hoặc báo lỗi
-    }
-} else {
-    include 'views/home.php';
-}
 
-if (strpos($act, 'category/') === 0) {
-    $slug = substr($act, 9);
-    // Tạo instance CategoryController và truyền $pdo vào constructor (dependency injection - OOP cơ bản)
-    // Giúp controller dùng model để query dữ liệu category từ MySQL
-    (new CategoryController($pdo))->show($slug); // Gọi method show trong CategoryController.
-} else {
-    match ($act) {
-        // Trang chủ: Hiển thị danh sách sản phẩm (từ MySQL qua model), view dùng Bootstrap table kiểu đen trắng
-        '/' => (new ProductController($pdo))->showHomePage(), // SỬA Ở ĐÂY: Đổi từ home() sang index(), vì index() đã tồn tại trong class ProductController (lấy all products và require view list.php)
-        
-        // Thêm sản phẩm vào giỏ hàng (logic addToCart trong controller, có thể lưu session hoặc DB)
-        // 'add-to-cart' => (new ProductController($pdo))->addToCart(),
-        
-        // Default: Xử lý 404 nếu act không tồn tại (tốt cho MVC đơn giản)
-        default => function() {
+// Tạo instance Controllers để xử lý routing
+$productController = new ProductController($pdo);
+$adminController = new AdminController($pdo);
+
+// Routing logic
+switch ($act) {
+    case '/':
+        $productController->showHomePage();
+        break;
+    case 'products':
+        $productController->showProductsPage();
+        break;
+    case 'product-detail':
+        $id = $_GET['id'] ?? 1;
+        $productController->showProductDetail($id);
+        break;
+    case 'about':
+        $productController->showAboutPage();
+        break;
+    case 'contact':
+        $productController->showContactPage();
+        break;
+    case 'send-contact':
+        $productController->sendContact();
+        break;
+    case 'login':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $productController->login();
+        } else {
+            $productController->showLoginPage();
+        }
+        break;
+    case 'register':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $productController->register();
+        } else {
+            $productController->showRegisterPage();
+        }
+        break;
+    case 'logout':
+        $productController->logout();
+        break;
+    case 'cart':
+        $productController->showCart();
+        break;
+    case 'wishlist':
+        $productController->showWishlist();
+        break;
+    case 'profile':
+        $productController->showProfile();
+        break;
+    case 'orders':
+        $productController->showOrders();
+        break;
+    case 'add-comment':
+        $productController->addComment();
+        break;
+    
+    // Admin routes
+    case 'admin-dashboard':
+        $adminController->dashboard();
+        break;
+    case 'admin-users':
+        $adminController->manageUsers();
+        break;
+    case 'admin-products':
+        $adminController->manageProducts();
+        break;
+    case 'admin-categories':
+        $adminController->manageCategories();
+        break;
+    case 'admin-comments':
+        $adminController->manageComments();
+        break;
+    case 'admin-add-product':
+        $adminController->addProduct();
+        break;
+    case 'admin-edit-product':
+        $adminController->editProduct();
+        break;
+    case 'admin-delete-user':
+        $adminController->deleteUser();
+        break;
+    case 'admin-delete-product':
+        $adminController->deleteProduct();
+        break;
+    case 'admin-delete-category':
+        $adminController->deleteCategory();
+        break;
+    case 'admin-delete-comment':
+        $adminController->deleteComment();
+        break;
+    
+    default:
+        if (strpos($act, 'category/') === 0) {
+            $slug = substr($act, 9);
+            (new CategoryController($pdo))->show($slug);
+        } else {
             header("HTTP/1.0 404 Not Found");
             echo '<h1>404 Not Found</h1><p>Trang bạn tìm không tồn tại. Quay về <a href="' . BASE_URL . '">trang chủ</a>.</p>';
-        },
-    };
+        }
+        break;
 }

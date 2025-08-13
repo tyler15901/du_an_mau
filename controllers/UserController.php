@@ -3,10 +3,12 @@
 
 class UserController {
     private $userModel;
+    private $pdo;
 
-    public function __construct() {
+    public function __construct($pdo) {
+        $this->pdo = $pdo;
         require_once PATH_ROOT . 'models/UserModel.php';
-        $this->userModel = new UserModel();
+        $this->userModel = new UserModel($pdo);
     }
 
     // Comment: Login (POST, check email/pass, set session with role)

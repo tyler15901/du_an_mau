@@ -39,7 +39,7 @@ $successMessage = $successMessage ?? ""; // Thông báo thành công nếu có
         }
     </style>
 </head>
-body
+<body>
     <!-- Header -->
     <?php include 'layouts/header.php'; ?>
 

@@ -1,24 +1,43 @@
 <?php
 
-// Hàm kết nối MySQL qua PDO (OOP style, dùng cho model query DB)
-// Sử dụng biến môi trường từ env.php (ví dụ: define('DB_HOST', 'localhost'); define('DB_NAME', 'du_an_mau'); v.v.)
-function connect_db() {
+// Kết nối CSDL qua PDO
+function connectDB() {
+    // Kết nối CSDL
+    $host = DB_HOST;
+    $port = DB_PORT;
+    $dbname = DB_NAME;
+
     try {
-        // Tạo DSN (Data Source Name) từ biến môi trường
-        $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4';
-        
-        // Tạo object PDO với user/pass, set attribute để báo lỗi exception (dễ debug)
-        $pdo = new PDO($dsn, DB_USER, DB_PASS);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); // Bật chế độ báo lỗi chi tiết
-        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC); // Fetch data kiểu array associative (dễ dùng trong model)
-        
-        return $pdo; // Trả về $pdo nếu connect thành công
+        $conn = new PDO("mysql:host=$host;port=$port;dbname=$dbname", DB_USERNAME, DB_PASSWORD);
+
+        // cài đặt chế độ báo lỗi là xử lý ngoại lệ
+        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        // cài đặt chế độ trả dữ liệu
+        $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    
+        return $conn;
     } catch (PDOException $e) {
-        // Debug cho sinh viên: In lỗi nếu connect thất bại (không dùng echo ở production, mà log)
-        echo 'Lỗi kết nối MySQL: ' . $e->getMessage();
-        return null; // Trả null để index.php kiểm tra
+        echo ("Connection failed: " . $e->getMessage());
     }
 }
 
-// Các hàm hỗ trợ khác (nếu có, ví dụ: hàm escape string, hoặc helper cho Bootstrap view)
-?>
+function uploadFile($file, $folderSave){
+    $file_upload = $file;
+    $pathStorage = $folderSave . rand(10000, 99999) . $file_upload['name'];
+
+    $tmp_file = $file_upload['tmp_name'];
+    $pathSave = PATH_ROOT . $pathStorage; // Đường dãn tuyệt đối của file
+
+    if (move_uploaded_file($tmp_file, $pathSave)) {
+        return $pathStorage;
+    }
+    return null;
+}
+
+function deleteFile($file){
+    $pathDelete = PATH_ROOT . $file;
+    if (file_exists($pathDelete)) {
+        unlink($pathDelete); // Hàm unlink dùng để xóa file
+    }
+}

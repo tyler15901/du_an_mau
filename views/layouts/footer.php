@@ -1,28 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Footer</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        /* Tùy chỉnh phong cách đen trắng */
-        .footer {
-            background-color: #333333; /* Nền footer tối */
-            color: #FFFFFF; /* Chữ trắng */
-            padding: 20px 0;
-        }
-        .footer a {
-            color: #CCCCCC; /* Liên kết xám nhạt */
-        }
-        .footer a:hover {
-            color: #FFFFFF; /* Liên kết trắng khi hover */
-        }
-    </style>
-</head>
-<body>
-    <footer class="footer">
+<footer class="footer">
         <div class="container">
             <div class="row">
                 <!-- Giới thiệu -->
@@ -62,5 +38,3 @@
             </div>
         </div>
     </footer>
-</body>
-</html>

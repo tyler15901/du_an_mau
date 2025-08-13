@@ -3,10 +3,12 @@
 class CategoryController {
     public $modelProduct;
     public $modelCategory;
+    private $pdo;
 
-    public function __construct() {
-        $this->modelProduct = new ProductModel();
-        $this->modelCategory = new CategoryModel();
+    public function __construct($pdo) {
+        $this->pdo = $pdo;
+        $this->modelProduct = new ProductModel($pdo);
+        $this->modelCategory = new CategoryModel($pdo);
     }
 
     // Comment: Method show() để hiển thị sản phẩm theo slug danh mục (gọi từ route /category/[slug]).

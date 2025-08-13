@@ -38,7 +38,7 @@ $errorMessage = $errorMessage ?? ""; // Thông báo lỗi nếu có
         }
     </style>
 </head>
-body
+<body>
     <!-- Header -->
     <?php include 'layouts/header.php'; ?>
 

@@ -1,130 +1,150 @@
-<?php 
+<?php
+require_once 'commons/env.php';
+require_once 'commons/function.php';
 
-require_once './commons/env.php'; // Khai báo biến môi trường (ví dụ: DB_HOST, DB_NAME, DB_USER, DB_PASS từ file .env hoặc config)
-require_once './commons/function.php'; // Hàm hỗ trợ (bao gồm hàm connect_db() để kết nối MySQL qua PDO)
+// Khởi tạo session
+session_start();
 
-// Require toàn bộ file Controllers 
-require_once(__DIR__ . '/controllers/ProductController.php');
-require_once(__DIR__ . '/controllers/CategoryController.php');
-require_once(__DIR__ . '/controllers/AdminController.php');
+// Lấy URL path (ổn định với hoặc không có dấu gạch chéo cuối)
+$requestUriPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$basePath = rtrim(parse_url(BASE_URL, PHP_URL_PATH), '/');
 
-// Require toàn bộ file Models
-require_once(__DIR__ . '/models/ProductModel.php');
-require_once(__DIR__ . '/models/CategoryModel.php'); 
-require_once(__DIR__ . '/models/UserModel.php');
-require_once(__DIR__ . '/models/CommentModel.php');
+// Loại bỏ basePath ở đầu nếu có, chấp nhận cả có/không có '/'
+$normalizedPath = preg_replace('#^' . preg_quote($basePath, '#') . '/?#', '', $requestUriPath);
+$path = trim($normalizedPath, '/');
 
-// Kết nối database MySQL một lần ở entry point (index.php) để tránh connect nhiều lần, tốt cho hiệu suất
-// Giả sử hàm connect_db() ở function.php trả về object PDO (OOP style, an toàn với prepare statement)
-$pdo = connect_db(); // Gọi hàm connect_db() để lấy $pdo. Nếu lỗi, hàm này sẽ throw exception hoặc return null
-
-// Kiểm tra kết nối thành công (debug cho sinh viên mới học: in lỗi nếu connect thất bại)
-if ($pdo === null) {
-    die('Lỗi kết nối MySQL: Kiểm tra biến môi trường ở env.php hoặc hàm connect_db() ở function.php');
+// Nếu path rỗng, chuyển về trang chủ
+if (empty($path)) {
+    $path = 'home';
 }
 
-$act = $_GET['act'] ?? '/';
+// Tách path thành các phần
+$segments = explode('/', $path);
+$controller = $segments[0] ?? 'home';
+$action = $segments[1] ?? 'index';
+$params = array_slice($segments, 2);
 
-// Tạo instance Controllers để xử lý routing
-$productController = new ProductController($pdo);
-$adminController = new AdminController($pdo);
+// Xử lý routing
+try {
+    // Nếu là admin đã đăng nhập và đang ở trang chủ, chuyển vào dashboard admin
+    if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin' && ($controller === 'home' || $controller === '')) {
+        header('Location: ' . BASE_URL . 'admin');
+        exit;
+    }
 
-// Routing logic
-switch ($act) {
-    case '/':
-        $productController->showHomePage();
-        break;
-    case 'products':
-        $productController->showProductsPage();
-        break;
-    case 'product-detail':
-        $id = $_GET['id'] ?? 1;
-        $productController->showProductDetail($id);
-        break;
-    case 'about':
-        $productController->showAboutPage();
-        break;
-    case 'contact':
-        $productController->showContactPage();
-        break;
-    case 'send-contact':
-        $productController->sendContact();
-        break;
-    case 'login':
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $productController->login();
-        } else {
-            $productController->showLoginPage();
-        }
-        break;
-    case 'register':
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $productController->register();
-        } else {
-            $productController->showRegisterPage();
-        }
-        break;
-    case 'logout':
-        $productController->logout();
-        break;
-    case 'cart':
-        $productController->showCart();
-        break;
-    case 'wishlist':
-        $productController->showWishlist();
-        break;
-    case 'profile':
-        $productController->showProfile();
-        break;
-    case 'orders':
-        $productController->showOrders();
-        break;
-    case 'add-comment':
-        $productController->addComment();
-        break;
-    
-    // Admin routes
-    case 'admin-dashboard':
-        $adminController->dashboard();
-        break;
-    case 'admin-users':
-        $adminController->manageUsers();
-        break;
-    case 'admin-products':
-        $adminController->manageProducts();
-        break;
-    case 'admin-categories':
-        $adminController->manageCategories();
-        break;
-    case 'admin-comments':
-        $adminController->manageComments();
-        break;
-    case 'admin-add-product':
-        $adminController->addProduct();
-        break;
-    case 'admin-edit-product':
-        $adminController->editProduct();
-        break;
-    case 'admin-delete-user':
-        $adminController->deleteUser();
-        break;
-    case 'admin-delete-product':
-        $adminController->deleteProduct();
-        break;
-    case 'admin-delete-category':
-        $adminController->deleteCategory();
-        break;
-    case 'admin-delete-comment':
-        $adminController->deleteComment();
-        break;
-    
-    default:
-        if (strpos($act, 'category/') === 0) {
-            $slug = substr($act, 9);
-            (new CategoryController($pdo))->show($slug);
-        } else {
-            header("HTTP/1.0 404 Not Found");
-            echo '<h1>404 Not Found</h1><p>Trang bạn tìm không tồn tại. Quay về <a href="' . BASE_URL . '">trang chủ</a>.</p>';
-        }
-        break;
+    switch ($controller) {
+        case 'home':
+            require_once 'controllers/ProductController.php';
+            $productController = new ProductController();
+            $productController->index();
+            break;
+            
+        case 'products':
+            require_once 'controllers/ProductController.php';
+            $productController = new ProductController();
+            
+            if ($action === 'list') {
+                $productController->listProducts();
+            } elseif ($action === 'detail' && isset($params[0])) {
+                $productController->detail($params[0]);
+            } elseif ($action === 'review') {
+                $productController->addReview();
+            } else {
+                $productController->listProducts();
+            }
+            break;
+            
+        case 'login':
+            require_once 'controllers/UserController.php';
+            $userController = new UserController();
+            $userController->login();
+            break;
+            
+        case 'register':
+            require_once 'controllers/UserController.php';
+            $userController = new UserController();
+            $userController->register();
+            break;
+            
+        case 'logout':
+            require_once 'controllers/UserController.php';
+            $userController = new UserController();
+            $userController->logout();
+            break;
+            
+        case 'admin':
+            require_once 'controllers/AdminController.php';
+            $adminController = new AdminController();
+            
+            switch ($action) {
+                case 'index':
+                case '':
+                    $adminController->index();
+                    break;
+                    
+                case 'categories':
+                    if (isset($params[0]) && $params[0] === 'add') {
+                        $adminController->addCategory();
+                    } elseif (isset($params[0]) && $params[0] === 'edit' && isset($params[1])) {
+                        $adminController->editCategory($params[1]);
+                    } elseif (isset($params[0]) && $params[0] === 'delete' && isset($params[1])) {
+                        $adminController->deleteCategory($params[1]);
+                    } else {
+                        $adminController->categories();
+                    }
+                    break;
+                    
+                case 'products':
+                    require_once 'controllers/ProductController.php';
+                    $productController = new ProductController();
+                    
+                    if (isset($params[0]) && $params[0] === 'add') {
+                        $productController->adminAdd();
+                    } elseif (isset($params[0]) && $params[0] === 'edit' && isset($params[1])) {
+                        $productController->adminEdit($params[1]);
+                    } elseif (isset($params[0]) && $params[0] === 'delete' && isset($params[1])) {
+                        $productController->adminDelete($params[1]);
+                    } else {
+                        $productController->adminList();
+                    }
+                    break;
+                    
+                case 'users':
+                    require_once 'controllers/UserController.php';
+                    $userController = new UserController();
+                    
+                    if (isset($params[0]) && $params[0] === 'detail' && isset($params[1])) {
+                        $userController->adminDetail($params[1]);
+                    } elseif (isset($params[0]) && $params[0] === 'delete' && isset($params[1])) {
+                        $userController->adminDelete($params[1]);
+                    } else {
+                        $userController->adminList();
+                    }
+                    break;
+                    
+                case 'reviews':
+                    if (isset($params[0]) && $params[0] === 'delete' && isset($params[1])) {
+                        $adminController->deleteReview($params[1]);
+                    } else {
+                        $adminController->reviews();
+                    }
+                    break;
+                    
+                default:
+                    $adminController->index();
+                    break;
+            }
+            break;
+            
+        default:
+            // Nếu không tìm thấy route, chuyển về trang chủ
+            require_once 'controllers/ProductController.php';
+            $productController = new ProductController();
+            $productController->index();
+            break;
+    }
+} catch (Exception $e) {
+    // Xử lý lỗi
+    echo "Có lỗi xảy ra: " . $e->getMessage();
 }
+?>

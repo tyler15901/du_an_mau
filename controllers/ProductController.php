@@ -11,7 +11,7 @@ class ProductController
 
     public function Home()
     {
-        $title = "Elevate Your Style";
+        $title = "FPOLYSHOP";
         $featuredProducts = $this->modelProduct->getFeaturedProducts(6);
         $categories = $this->modelProduct->getCategories();
         $newProducts = $this->modelProduct->getNewProducts(30);

@@ -1,6 +1,8 @@
 <?php
 // Kiểm tra session hoặc dữ liệu từ controller
-$title = $title ?? "Về chúng tôi";
+$title = $title ?? "Danh mục sản phẩm";
+$category = $category ?? []; // Thông tin danh mục từ model
+$products = $products ?? []; // Danh sách sản phẩm từ model
 ?>
 
 <!DOCTYPE html>
@@ -9,13 +11,13 @@ $title = $title ?? "Về chúng tôi";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $title; ?></title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="<?= BASE_URL ?>assets/css/base.css?v=1.0.1" rel="stylesheet">
     <link href="<?= BASE_URL ?>assets/css/public.css?v=1.0.1" rel="stylesheet">
 </head>
-<body class="public-theme with-fixed-top">
+<body class="category-page">
+    <!-- Header -->
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
@@ -52,28 +54,41 @@ $title = $title ?? "Về chúng tôi";
         </div>
     </nav>
 
-    <!-- About Section -->
+    <!-- Category Section -->
     <div class="container mt-4">
-        <div class="about-section">
-            <h2>Về chúng tôi</h2>
-            <p>
-                Chào mừng bạn đến với cửa hàng thời trang nam của chúng tôi! Chúng tôi tự hào là địa chỉ uy tín chuyên cung cấp các sản phẩm thời trang nam cao cấp, từ áo sơ mi, quần jeans đến phụ kiện sang trọng. Với sứ mệnh mang đến phong cách hiện đại và đẳng cấp cho mọi quý ông, chúng tôi cam kết chất lượng sản phẩm và dịch vụ tốt nhất.
-            </p>
-            <p>
-                Thành lập vào năm 2020, chúng tôi đã không ngừng phát triển để đáp ứng nhu cầu ngày càng cao của khách hàng. Đội ngũ của chúng tôi bao gồm những nhà thiết kế và chuyên gia thời trang giàu kinh nghiệm, luôn cập nhật xu hướng mới nhất từ khắp nơi trên thế giới.
-            </p>
-            <h4>Giá trị cốt lõi</h4>
-            <ul>
-                <li>Chất lượng vượt trội</li>
-                <li>Dịch vụ khách hàng tận tâm</li>
-                <li>Thời trang bền vững</li>
-            </ul>
-            <p>
-                Hãy ghé thăm cửa hàng của chúng tôi hoặc liên hệ qua <a href="index.php?act=contact" style="color: #CCCCCC;">trang liên hệ</a> để biết thêm thông tin. Cảm ơn bạn đã đồng hành cùng chúng tôi!
-            </p>
+        <div class="row">
+            <div class="col-12">
+                <h2><?php echo $category['name'] ?? 'Danh mục'; ?></h2>
+                <p><?php echo $category['description'] ?? 'Các sản phẩm trong danh mục này'; ?></p>
+            </div>
         </div>
+        
+        <!-- Products Grid -->
+        <div class="row">
+            <?php foreach ($products as $product): ?>
+                <div class="col-12 col-md-3 mb-3">
+                    <div class="card h-100">
+                        <img src="https://via.placeholder.com/200x200" class="card-img-top" alt="<?php echo $product['name']; ?>">
+                        <div class="card-body">
+                            <h5 class="card-title"><?php echo $product['name']; ?></h5>
+                            <p class="card-text"><?php echo number_format($product['price'], 0, ',', '.') . ' VNĐ'; ?></p>
+                            <a href="index.php?act=product-detail&id=<?php echo $product['id']; ?>" class="btn">Xem chi tiết</a>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+        
+        <?php if (empty($products)): ?>
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p>Không có sản phẩm nào trong danh mục này.</p>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 
+    <!-- Footer -->
     <!-- Footer -->
     <footer class="footer mt-5">
         <div class="container">

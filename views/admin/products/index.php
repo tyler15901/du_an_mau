@@ -1,97 +1,72 @@
-<?php
-$pageTitle = 'Quản lý sản phẩm';
-$currentPage = 'products';
+<?php 
+$__admin_view = __FILE__;
 ob_start();
 ?>
-
-<div class="page-header">
-    <h1 class="page-title">Quản lý sản phẩm</h1>
-    <p class="page-subtitle">Thêm, sửa, xóa sản phẩm</p>
+<div class="d-flex justify-content-between align-items-center mb-3" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+  <h1 class="h3 m-0">Sản phẩm</h1>
+  <a class="btn btn-secondary" href="<?= BASE_URL ?>?act=admin-product-create">Thêm</a>
 </div>
-
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-box me-2"></i>Danh sách sản phẩm</h5>
-        <a href="<?= BASE_URL ?>admin/products/add" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Thêm sản phẩm
-        </a>
+<div class="card" style="padding:12px">
+  <form class="row g-2 mb-3 admin-filters align-items-center" method="get" action="">
+    <input type="hidden" name="act" value="admin-products">
+    <div class="col-md-2">
+      <select class="form-select" name="category_id">
+        <option value="">Tất cả danh mục</option>
+        <?php foreach($categories as $c): ?>
+          <option value="<?= (int)$c['id'] ?>" <?= (($_GET['category_id'] ?? '')==$c['id'])?'selected':'' ?>><?= htmlspecialchars($c['name']) ?></option>
+        <?php endforeach; ?>
+      </select>
     </div>
-    <div class="card-body">
-        <?php if (!empty($products)): ?>
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Hình ảnh</th>
-                        <th>Tên sản phẩm</th>
-                        <th>Danh mục</th>
-                        <th>Giá</th>
-                        <th>Tồn kho</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($products as $product): ?>
-                    <tr>
-                        <td><?= $product['id'] ?></td>
-                        <td>
-                            <img src="<?= BASE_URL . $product['image'] ?>" alt="<?= $product['name'] ?>" 
-                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
-                        </td>
-                        <td>
-                            <strong><?= $product['name'] ?></strong>
-                            <br>
-                            <small class="text-muted"><?= $product['slug'] ?></small>
-                        </td>
-                        <td>
-                            <span class="badge bg-primary"><?= $product['category_name'] ?></span>
-                        </td>
-                        <td>
-                            <strong><?= number_format($product['price']) ?> VNĐ</strong>
-                        </td>
-                        <td>
-                            <span class="badge bg-<?= $product['stock'] > 0 ? 'success' : 'danger' ?>">
-                                <?= $product['stock'] ?>
-                            </span>
-                        </td>
-                        <td>
-                            <div class="btn-group" role="group">
-                                <a href="<?= BASE_URL ?>admin/products/edit/<?= $product['id'] ?>" 
-                                   class="btn btn-outline-primary btn-sm" title="Sửa">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <a href="<?= BASE_URL ?>products/detail/<?= $product['slug'] ?>" 
-                                   class="btn btn-outline-info btn-sm" title="Xem" target="_blank">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <button type="button" class="btn btn-outline-danger btn-sm" 
-                                        onclick="confirmDelete(<?= $product['id'] ?>, '<?= $product['name'] ?>')" title="Xóa">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        <?php else: ?>
-        <div class="text-center py-5">
-            <i class="fas fa-box-open" style="font-size: 4rem; color: #ccc; margin-bottom: 1rem;"></i>
-            <h4>Chưa có sản phẩm nào</h4>
-            <p class="text-muted">Bắt đầu bằng cách thêm sản phẩm đầu tiên</p>
-            <a href="<?= BASE_URL ?>admin/products/add" class="btn btn-primary btn-lg">
-                <i class="fas fa-plus me-2"></i>Thêm sản phẩm
-            </a>
-        </div>
-        <?php endif; ?>
+    <div class="col-md-2"><input type="number" class="form-control" name="min_price" placeholder="Giá từ" value="<?= htmlspecialchars($_GET['min_price'] ?? '') ?>"></div>
+    <div class="col-md-2"><input type="number" class="form-control" name="max_price" placeholder="Giá đến" value="<?= htmlspecialchars($_GET['max_price'] ?? '') ?>"></div>
+    <div class="col-md-2">
+      <select class="form-select" name="sort">
+        <option value="">ID tăng dần</option>
+        <option value="id_desc" <?= (($_GET['sort'] ?? '')==='id_desc')?'selected':'' ?>>ID giảm dần</option>
+        <option value="price_asc" <?= (($_GET['sort'] ?? '')==='price_asc')?'selected':'' ?>>Giá tăng dần</option>
+        <option value="price_desc" <?= (($_GET['sort'] ?? '')==='price_desc')?'selected':'' ?>>Giá giảm dần</option>
+        <option value="newest" <?= (($_GET['sort'] ?? '')==='newest')?'selected':'' ?>>Mới nhất</option>
+        <option value="oldest" <?= (($_GET['sort'] ?? '')==='oldest')?'selected':'' ?>>Cũ nhất</option>
+      </select>
     </div>
+    <div class="col-md-2 d-flex align-items-center">
+      <div class="form-check m-0">
+        <input class="form-check-input" type="checkbox" name="has_discount" id="has_discount" <?= isset($_GET['has_discount'])?'checked':'' ?>>
+        <label class="form-check-label ms-1 mb-0" for="has_discount">Giảm giá</label>
+      </div>
+    </div>
+    <div class="col-auto ms-auto"><button class="btn btn-secondary">Lọc</button></div>
+  </form>
+  <table class="table">
+    <thead><tr><th>ID</th><th>Tên</th><th>Danh mục</th><th>Giá</th><th>Giảm%</th><th style="width:220px"></th></tr></thead>
+    <tbody>
+      <?php foreach($products as $p): ?>
+      <tr>
+        <td><?= (int)$p['id'] ?></td>
+        <td><?= htmlspecialchars($p['name']) ?></td>
+        <td><?= htmlspecialchars($p['category_name']) ?></td>
+        <td><?= number_format($p['price']) ?>₫</td>
+        <td><?= (int)$p['discount_percent'] ?></td>
+        <td>
+          <a class="btn btn-sm btn-light" href="<?= BASE_URL ?>?act=admin-product-show&id=<?= (int)$p['id'] ?>">Xem</a>
+          <a class="btn btn-sm btn-secondary" href="<?= BASE_URL ?>?act=admin-product-edit&id=<?= (int)$p['id'] ?>">Sửa</a>
+          <a class="btn btn-sm btn-outline-danger" href="<?= BASE_URL ?>?act=admin-product-delete&id=<?= (int)$p['id'] ?>" onclick="return confirm('Xóa sản phẩm?')">Xóa</a>
+        </td>
+      </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table>
 </div>
+<nav class="mt-3">
+  <ul class="pagination">
+    <?php for($i=1;$i<=$pages;$i++): ?>
+      <li class="page-item <?= $i===$page?'active':'' ?>">
+        <a class="page-link" href="<?= BASE_URL ?>?act=admin-products&page=<?= $i ?>"><?= $i ?></a>
+      </li>
+    <?php endfor; ?>
+  </ul>
+  <div class="small text-secondary">Trang <?= $page ?> / <?= $pages ?> (<?= $total ?> mục)</div>
+</nav>
+<?php $__content = ob_get_clean(); include __DIR__ . '/../layout.php'; ?>
 
 
-
-<?php
-$content = ob_get_clean();
-include 'admin/views/layout.php';
-?>

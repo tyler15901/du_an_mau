@@ -1,47 +1,35 @@
-<?php
-$pageTitle = 'Chi tiết người dùng';
-$currentPage = 'users';
+<?php 
+$__admin_view = __FILE__;
 ob_start();
 ?>
-
-<div class="page-header">
-    <h1 class="page-title">Chi tiết người dùng</h1>
-    <p class="page-subtitle">Thông tin tài khoản</p>
+<div class="card" style="padding:12px">
+  <h1 class="h3 mb-3">Người dùng</h1>
+  <table class="table">
+    <thead><tr><th>ID</th><th>Họ tên</th><th>Email</th><th>Giới tính</th><th>Ngày sinh</th><th>Vai trò</th></tr></thead>
+    <tbody>
+      <?php foreach($users as $u): ?>
+      <tr>
+        <td><?= (int)$u['id'] ?></td>
+        <td><?= htmlspecialchars($u['ho_ten']) ?></td>
+        <td><?= htmlspecialchars($u['email']) ?></td>
+        <td><?= htmlspecialchars($u['gioi_tinh']) ?></td>
+        <td><?= htmlspecialchars($u['ngay_sinh']) ?></td>
+        <td><?= htmlspecialchars($u['role']) ?></td>
+      </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table>
 </div>
-
-<div class="card">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="fas fa-user me-2"></i>Thông tin</h5>
-    </div>
-    <div class="card-body">
-        <?php if (!empty($user)): ?>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="mb-3"><strong>Họ tên:</strong> <?= htmlspecialchars($user['ho_ten']) ?></div>
-                <div class="mb-3"><strong>Email:</strong> <?= htmlspecialchars($user['email']) ?></div>
-                <div class="mb-3"><strong>Giới tính:</strong> <?= htmlspecialchars($user['gioi_tinh']) ?></div>
-            </div>
-            <div class="col-md-6">
-                <div class="mb-3"><strong>Ngày sinh:</strong> <?= htmlspecialchars($user['ngay_sinh']) ?></div>
-                <div class="mb-3"><strong>Vai trò:</strong> <span class="badge bg-<?= $user['role'] === 'admin' ? 'dark' : 'secondary' ?>"><?= htmlspecialchars($user['role']) ?></span></div>
-                <div class="mb-3"><strong>Ngày tạo:</strong> <small class="text-muted"><?= htmlspecialchars($user['created_at']) ?></small></div>
-            </div>
-        </div>
-        <?php else: ?>
-        <div class="alert alert-warning">Không tìm thấy thông tin người dùng.</div>
-        <?php endif; ?>
-
-        <div class="mt-4 d-flex justify-content-between">
-            <a href="<?= BASE_URL ?>admin/users" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Quay lại
-            </a>
-        </div>
-    </div>
-</div>
-
-<?php
-$content = ob_get_clean();
-include 'admin/views/layout.php';
-?>
+<nav class="mt-3">
+  <ul class="pagination">
+    <?php for($i=1;$i<=$pages;$i++): ?>
+      <li class="page-item <?= $i===$page?'active':'' ?>">
+        <a class="page-link" href="<?= BASE_URL ?>?act=admin-users&page=<?= $i ?>"><?= $i ?></a>
+      </li>
+    <?php endfor; ?>
+  </ul>
+  <div class="small text-secondary">Trang <?= $page ?> / <?= $pages ?> (<?= $total ?> mục)</div>
+</nav>
+<?php $__content = ob_get_clean(); include __DIR__ . '/../layout.php'; ?>
 
 

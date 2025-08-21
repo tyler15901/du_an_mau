@@ -1,222 +1,191 @@
-<?php
-require_once 'commons/env.php';
-require_once 'commons/function.php';
-
-class ProductModel {
-    private $conn;
-    
-    public function __construct() {
+<?php 
+// Có class chứa các function thực thi tương tác với cơ sở dữ liệu 
+class ProductModel 
+{
+    public $conn;
+    public function __construct()
+    {
         $this->conn = connectDB();
     }
-    
-    // Lấy tất cả sản phẩm
-    public function getAllProducts($limit = null, $offset = null) {
-        $sql = "SELECT p.*, c.name as category_name 
-                FROM products p 
-                JOIN categories c ON p.category_id = c.id 
-                ORDER BY p.id DESC";
-        
-        if ($limit) {
-            $sql .= " LIMIT $limit";
-            if ($offset) {
-                $sql .= " OFFSET $offset";
-            }
-        }
-        
+
+    // Viết truy vấn danh sách sản phẩm 
+    public function getAllProducts()
+    {
+        $sql = "SELECT p.*, c.name AS category_name FROM products p INNER JOIN categories c ON p.category_id = c.id ORDER BY p.id DESC";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll();
     }
-    
-    // Lấy sản phẩm theo danh mục
-    public function getProductsByCategory($categoryId, $limit = null, $offset = null) {
-        $sql = "SELECT p.*, c.name as category_name 
-                FROM products p 
-                JOIN categories c ON p.category_id = c.id 
-                WHERE p.category_id = :category_id 
-                ORDER BY p.id DESC";
-        
-        if ($limit) {
-            $sql .= " LIMIT $limit";
-            if ($offset) {
-                $sql .= " OFFSET $offset";
-            }
-        }
-        
+
+    public function getFeaturedProducts($limit = 6)
+    {
+        $sql = "SELECT * FROM products ORDER BY id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':category_id', $categoryId);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll();
     }
-    
-    // Lấy sản phẩm theo slug
-    public function getProductBySlug($slug) {
-        $sql = "SELECT p.*, c.name as category_name 
-                FROM products p 
-                JOIN categories c ON p.category_id = c.id 
-                WHERE p.slug = :slug";
-        
+
+    public function getProductBySlug($slug)
+    {
+        $sql = "SELECT * FROM products WHERE slug = :slug LIMIT 1";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':slug', $slug);
+        $stmt->bindValue(':slug', $slug);
         $stmt->execute();
         return $stmt->fetch();
     }
-    
-    // Lấy sản phẩm theo ID
-    public function getProductById($id) {
-        $sql = "SELECT p.*, c.name as category_name 
-                FROM products p 
-                JOIN categories c ON p.category_id = c.id 
-                WHERE p.id = :id";
-        
+
+    public function getRelatedProducts($categoryId, $excludeId, $limit = 8)
+    {
+        $sql = "SELECT * FROM products WHERE category_id = :cid AND id <> :id LIMIT :limit";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':id', $id);
+        $stmt->bindValue(':cid', (int)$categoryId, PDO::PARAM_INT);
+        $stmt->bindValue(':id', (int)$excludeId, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function getProductsByTag($tag)
+    {
+        $sql = "SELECT p.*, c.name AS category_name FROM products p INNER JOIN categories c ON p.category_id = c.id WHERE c.slug = :slug ORDER BY p.id DESC";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':slug', $tag);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function getNewProducts($days = 30)
+    {
+        $sql = "SELECT p.*, c.name AS category_name
+                FROM products p 
+                INNER JOIN categories c ON p.category_id = c.id
+                WHERE p.created_at >= (NOW() - INTERVAL :days DAY)
+                ORDER BY p.created_at DESC";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':days', (int)$days, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function getCategories()
+    {
+        $sql = "SELECT * FROM categories ORDER BY name";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function getPromotionProducts($limit = 8)
+    {
+        // Lấy sản phẩm có discount_percent > 0
+        $sql = "SELECT p.*, c.name AS category_name FROM products p INNER JOIN categories c ON p.category_id = c.id WHERE p.discount_percent > 0 ORDER BY p.id DESC LIMIT :limit";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function getCategoryBySlug(string $slug)
+    {
+        $sql = "SELECT * FROM categories WHERE slug = :slug LIMIT 1";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':slug', $slug);
         $stmt->execute();
         return $stmt->fetch();
     }
-    
-    // Tìm kiếm sản phẩm
-    public function searchProducts($keyword, $limit = null, $offset = null) {
-        $sql = "SELECT p.*, c.name as category_name 
-                FROM products p 
-                JOIN categories c ON p.category_id = c.id 
-                WHERE p.name LIKE :keyword OR p.description LIKE :keyword 
+
+    public function searchProducts(string $keyword)
+    {
+        $sql = "SELECT p.*, c.name AS category_name
+                FROM products p INNER JOIN categories c ON p.category_id = c.id
+                WHERE p.name LIKE :kw OR c.name LIKE :kw OR p.slug LIKE :kw
                 ORDER BY p.id DESC";
-        
-        if ($limit) {
-            $sql .= " LIMIT $limit";
-            if ($offset) {
-                $sql .= " OFFSET $offset";
-            }
-        }
-        
         $stmt = $this->conn->prepare($sql);
-        $keyword = "%$keyword%";
-        $stmt->bindParam(':keyword', $keyword);
+        $kw = '%' . $keyword . '%';
+        $stmt->bindValue(':kw', $kw);
         $stmt->execute();
         return $stmt->fetchAll();
     }
-    
-    // Lọc sản phẩm theo giá
-    public function filterProductsByPrice($minPrice, $maxPrice, $limit = null, $offset = null) {
-        $sql = "SELECT p.*, c.name as category_name 
-                FROM products p 
-                JOIN categories c ON p.category_id = c.id 
-                WHERE p.price BETWEEN :min_price AND :max_price 
-                ORDER BY p.price ASC";
-        
-        if ($limit) {
-            $sql .= " LIMIT $limit";
-            if ($offset) {
-                $sql .= " OFFSET $offset";
-            }
+
+    public function getFilteredProducts(array $opts)
+    {
+        $sql = "SELECT p.*, c.name AS category_name
+                FROM products p
+                INNER JOIN categories c ON p.category_id = c.id
+                WHERE 1=1";
+        $params = [];
+
+        if (!empty($opts['tag'])) {
+            $sql .= " AND c.slug = :tag";
+            $params[':tag'] = $opts['tag'];
         }
-        
+
+        if (!empty($opts['q'])) {
+            $sql .= " AND (p.name LIKE :kw OR c.name LIKE :kw)";
+            $params[':kw'] = '%' . $opts['q'] . '%';
+        }
+
+        if (isset($opts['min_price']) && $opts['min_price'] !== '') {
+            $sql .= " AND p.price >= :minp";
+            $params[':minp'] = (int)$opts['min_price'];
+        }
+        if (isset($opts['max_price']) && $opts['max_price'] !== '') {
+            $sql .= " AND p.price <= :maxp";
+            $params[':maxp'] = (int)$opts['max_price'];
+        }
+
+        // Frontend promo filter (only discounted products)
+        if (!empty($opts['promo'])) {
+            $sql .= " AND p.discount_percent > 0";
+        }
+
+        $sort = $opts['sort'] ?? '';
+        switch ($sort) {
+            case 'name_asc':
+                $sql .= " ORDER BY p.name ASC"; break;
+            case 'name_desc':
+                $sql .= " ORDER BY p.name DESC"; break;
+            case 'price_asc':
+                $sql .= " ORDER BY p.price ASC"; break;
+            case 'price_desc':
+                $sql .= " ORDER BY p.price DESC"; break;
+            case 'oldest':
+                $sql .= " ORDER BY p.created_at ASC"; break;
+            case 'newest':
+                $sql .= " ORDER BY p.created_at DESC"; break;
+            default:
+                $sql .= " ORDER BY p.id DESC"; break;
+        }
+
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':min_price', $minPrice);
-        $stmt->bindParam(':max_price', $maxPrice);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
+        }
         $stmt->execute();
         return $stmt->fetchAll();
     }
-    
-    // Thêm sản phẩm mới
-    public function addProduct($data) {
-        $sql = "INSERT INTO products (name, price, category_id, description, image, stock, slug) 
-                VALUES (:name, :price, :category_id, :description, :image, :stock, :slug)";
-        
+
+    public function getReviewsByProduct(int $productId)
+    {
+        $sql = "SELECT r.*, u.ho_ten AS user_name
+                FROM reviews r
+                INNER JOIN users u ON r.user_id = u.id
+                WHERE r.product_id = :pid
+                ORDER BY r.created_at DESC";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':name', $data['name']);
-        $stmt->bindParam(':price', $data['price']);
-        $stmt->bindParam(':category_id', $data['category_id']);
-        $stmt->bindParam(':description', $data['description']);
-        $stmt->bindParam(':image', $data['image']);
-        $stmt->bindParam(':stock', $data['stock']);
-        $stmt->bindParam(':slug', $data['slug']);
-        
-        return $stmt->execute();
-    }
-    
-    // Cập nhật sản phẩm
-    public function updateProduct($id, $data) {
-        $sql = "UPDATE products 
-                SET name = :name, price = :price, category_id = :category_id, 
-                    description = :description, stock = :stock, slug = :slug";
-        
-        // Chỉ cập nhật ảnh nếu có ảnh mới
-        if (!empty($data['image'])) {
-            $sql .= ", image = :image";
-        }
-        
-        $sql .= " WHERE id = :id";
-        
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':name', $data['name']);
-        $stmt->bindParam(':price', $data['price']);
-        $stmt->bindParam(':category_id', $data['category_id']);
-        $stmt->bindParam(':description', $data['description']);
-        $stmt->bindParam(':stock', $data['stock']);
-        $stmt->bindParam(':slug', $data['slug']);
-        $stmt->bindParam(':id', $id);
-        
-        if (!empty($data['image'])) {
-            $stmt->bindParam(':image', $data['image']);
-        }
-        
-        return $stmt->execute();
-    }
-    
-    // Xóa sản phẩm
-    public function deleteProduct($id) {
-        // Lấy thông tin ảnh trước khi xóa
-        $product = $this->getProductById($id);
-        
-        $sql = "DELETE FROM products WHERE id = :id";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':id', $id);
-        
-        if ($stmt->execute()) {
-            // Xóa file ảnh nếu có
-            if ($product && !empty($product['image'])) {
-                deleteFile($product['image']);
-            }
-            return true;
-        }
-        return false;
-    }
-    
-    // Đếm tổng số sản phẩm
-    public function countProducts($categoryId = null) {
-        $sql = "SELECT COUNT(*) as total FROM products";
-        if ($categoryId) {
-            $sql .= " WHERE category_id = :category_id";
-        }
-        
-        $stmt = $this->conn->prepare($sql);
-        if ($categoryId) {
-            $stmt->bindParam(':category_id', $categoryId);
-        }
+        $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
         $stmt->execute();
-        $result = $stmt->fetch();
-        return $result['total'];
+        return $stmt->fetchAll();
     }
-    
-    // Tạo slug từ tên sản phẩm
-    public function createSlug($name) {
-        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name)));
-        $slug = preg_replace('/-+/', '-', $slug);
-        $slug = trim($slug, '-');
-        
-        // Kiểm tra slug đã tồn tại chưa
-        $sql = "SELECT COUNT(*) as count FROM products WHERE slug = :slug";
+
+    public function addReview(int $productId, int $userId, string $comment)
+    {
+        $sql = "INSERT INTO reviews (product_id, user_id, comment) VALUES (:pid, :uid, :cmt)";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':slug', $slug);
-        $stmt->execute();
-        $result = $stmt->fetch();
-        
-        if ($result['count'] > 0) {
-            $slug .= '-' . time();
-        }
-        
-        return $slug;
+        $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
+        $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
+        $stmt->bindValue(':cmt', $comment);
+        return $stmt->execute();
     }
 }

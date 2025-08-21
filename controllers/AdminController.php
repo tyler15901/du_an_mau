@@ -1,187 +1,232 @@
 <?php
-require_once 'models/ProductModel.php';
-require_once 'models/CategoryModel.php';
-require_once 'models/UserModel.php';
-require_once 'models/ReviewModel.php';
 
-class AdminController {
-    private $productModel;
-    private $categoryModel;
-    private $userModel;
-    private $reviewModel;
-    
-    public function __construct() {
-        $this->productModel = new ProductModel();
-        $this->categoryModel = new CategoryModel();
-        $this->userModel = new UserModel();
-        $this->reviewModel = new ReviewModel();
+class AdminController
+{
+    private AdminModel $model;
+
+    public function __construct()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        // Guard: only admin
+        $user = $_SESSION['user'] ?? null;
+        if (!$user || ($user['role'] ?? 'user') !== 'admin') {
+            header('Location: ' . BASE_URL . '?act=login');
+            exit;
+        }
+
+        $this->model = new AdminModel();
     }
-    
-    // Trang chủ admin
-    public function index() {
-        session_start();
-        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-            header('Location: ' . BASE_URL . 'login');
-            exit;
-        }
-        
-        // Thống kê
-        $totalProducts = $this->productModel->countProducts();
-        $totalCategories = count($this->categoryModel->getAllCategories());
-        $totalUsers = $this->userModel->countUsers();
-        $totalReviews = $this->reviewModel->countReviews();
-        
-        // Sản phẩm mới nhất
-        $latestProducts = $this->productModel->getAllProducts(5);
-        
-        // Người dùng mới nhất
-        $latestUsers = $this->userModel->getAllUsers();
-        $latestUsers = array_slice($latestUsers, 0, 5);
-        
-        include 'admin/views/dashboard.php';
+
+    // Dashboard
+    public function dashboard(): void
+    {
+        $title = 'Bảng điều khiển';
+        $counts = $this->model->getCounts();
+        include './views/admin/dashboard.php';
     }
-    
-    // Quản lý danh mục
-    public function categories() {
-        session_start();
-        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-            header('Location: ' . BASE_URL . 'login');
-            exit;
-        }
-        
-        $categories = $this->categoryModel->getAllCategories();
-        include 'admin/views/categories.php';
+
+    // Categories
+    public function categories(): void
+    {
+        $title = 'Quản lý danh mục';
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $limit = 10; $offset = ($page-1)*$limit;
+        $total = $this->model->countCategories();
+        $pages = max(1, (int)ceil($total / $limit));
+        $categories = $this->model->getCategoriesPaginated($offset, $limit);
+        include './views/admin/categories/index.php';
     }
-    
-    // Thêm danh mục
-    public function addCategory() {
-        session_start();
-        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-            header('Location: ' . BASE_URL . 'login');
-            exit;
-        }
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $name = trim($_POST['name']);
-            
-            // Validate
-            if (empty($name)) {
-                $_SESSION['error'] = 'Vui lòng nhập tên danh mục';
-                header('Location: ' . $_SERVER['HTTP_REFERER']);
-                exit;
-            }
-            
-            $data = [
-                'name' => $name,
-                'slug' => $this->categoryModel->createSlug($name)
-            ];
-            
-            if ($this->categoryModel->addCategory($data)) {
-                $_SESSION['success'] = 'Thêm danh mục thành công';
-                header('Location: ' . BASE_URL . 'admin/categories');
-                exit;
-            } else {
-                $_SESSION['error'] = 'Có lỗi xảy ra';
-            }
-        }
-        
-        include 'admin/views/add-category.php';
+
+    public function categoryCreate(): void
+    {
+        $title = 'Thêm danh mục';
+        $category = [ 'name' => '', 'slug' => '' ];
+        $isEdit = false;
+        include './views/admin/categories/form.php';
     }
-    
-    // Sửa danh mục
-    public function editCategory($id) {
-        session_start();
-        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-            header('Location: ' . BASE_URL . 'login');
-            exit;
-        }
-        
-        $category = $this->categoryModel->getCategoryById($id);
-        if (!$category) {
-            header('Location: ' . BASE_URL . 'admin/categories');
-            exit;
-        }
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $name = trim($_POST['name']);
-            
-            // Validate
-            if (empty($name)) {
-                $_SESSION['error'] = 'Vui lòng nhập tên danh mục';
-                header('Location: ' . $_SERVER['HTTP_REFERER']);
-                exit;
-            }
-            
-            $data = [
-                'name' => $name,
-                'slug' => $this->categoryModel->createSlug($name)
-            ];
-            
-            if ($this->categoryModel->updateCategory($id, $data)) {
-                $_SESSION['success'] = 'Cập nhật danh mục thành công';
-                header('Location: ' . BASE_URL . 'admin/categories');
-                exit;
-            } else {
-                $_SESSION['error'] = 'Có lỗi xảy ra';
-            }
-        }
-        
-        include 'admin/views/edit-category.php';
+
+    public function categoryStore(): void
+    {
+        $name = trim($_POST['name'] ?? '');
+        $slug = trim($_POST['slug'] ?? '');
+        if ($name === '') { $name = 'Danh mục chưa đặt tên'; }
+        if ($slug === '') { $slug = $this->slugify($name); }
+        $this->model->createCategory($name, $slug);
+        header('Location: ' . BASE_URL . '?act=admin-categories');
     }
-    
-    // Xóa danh mục
-    public function deleteCategory($id) {
-        session_start();
-        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-            header('Location: ' . BASE_URL . 'login');
-            exit;
-        }
-        
-        // Kiểm tra có sản phẩm trong danh mục không
-        $productCount = $this->categoryModel->countProductsInCategory($id);
-        if ($productCount > 0) {
-            $_SESSION['error'] = 'Không thể xóa danh mục có sản phẩm';
-            header('Location: ' . BASE_URL . 'admin/categories');
-            exit;
-        }
-        
-        if ($this->categoryModel->deleteCategory($id)) {
-            $_SESSION['success'] = 'Xóa danh mục thành công';
-        } else {
-            $_SESSION['error'] = 'Có lỗi xảy ra';
-        }
-        
-        header('Location: ' . BASE_URL . 'admin/categories');
-        exit;
+
+    public function categoryEdit(): void
+    {
+        $id = (int)($_GET['id'] ?? 0);
+        $category = $this->model->getCategory($id);
+        if (!$category) { http_response_code(404); echo 'Không tìm thấy'; return; }
+        $title = 'Sửa danh mục';
+        $isEdit = true;
+        include './views/admin/categories/form.php';
     }
-    
-    // Quản lý bình luận
-    public function reviews() {
-        session_start();
-        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-            header('Location: ' . BASE_URL . 'login');
-            exit;
-        }
-        
-        $reviews = $this->reviewModel->getAllReviews();
-        include 'admin/views/manage-reviews.php';
+
+    public function categoryUpdate(): void
+    {
+        $id = (int)($_POST['id'] ?? 0);
+        $name = trim($_POST['name'] ?? '');
+        $slug = trim($_POST['slug'] ?? '');
+        if ($name === '') { $name = 'Danh mục chưa đặt tên'; }
+        if ($slug === '') { $slug = $this->slugify($name); }
+        $this->model->updateCategory($id, $name, $slug);
+        header('Location: ' . BASE_URL . '?act=admin-categories');
     }
-    
-    // Xóa bình luận
-    public function deleteReview($id) {
-        session_start();
-        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-            header('Location: ' . BASE_URL . 'login');
-            exit;
+
+    public function categoryDelete(): void
+    {
+        $id = (int)($_GET['id'] ?? 0);
+        $this->model->deleteCategory($id);
+        header('Location: ' . BASE_URL . '?act=admin-categories');
+    }
+
+    // Products
+    public function products(): void
+    {
+        $title = 'Quản lý sản phẩm';
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $limit = 10; $offset = ($page-1)*$limit;
+        $filters = [
+            'q' => trim($_GET['q'] ?? ''),
+            'category_id' => $_GET['category_id'] ?? '',
+            'has_discount' => isset($_GET['has_discount']) ? 1 : 0,
+            'min_price' => $_GET['min_price'] ?? '',
+            'max_price' => $_GET['max_price'] ?? '',
+            'sort' => $_GET['sort'] ?? ''
+        ];
+        $total = $this->model->countProductsFiltered($filters);
+        $pages = max(1, (int)ceil($total / $limit));
+        $products = $this->model->getProductsFilteredPaginated($filters, $offset, $limit);
+        $categories = $this->model->getCategories();
+        include './views/admin/products/index.php';
+    }
+
+    public function productCreate(): void
+    {
+        $title = 'Thêm sản phẩm';
+        $categories = $this->model->getCategories();
+        $product = [
+            'name' => '', 'slug' => '', 'price' => 0, 'category_id' => '',
+            'discount_percent' => 0, 'description' => '', 'image' => ''
+        ];
+        $isEdit = false;
+        include './views/admin/products/form.php';
+    }
+
+    public function productStore(): void
+    {
+        $data = $this->collectProductData();
+        // Upload image if any
+        if (!empty($_FILES['image']['name'])) {
+            $path = uploadFile($_FILES['image'], 'uploads/');
+            if ($path) { $data['image'] = $path; }
         }
-        
-        if ($this->reviewModel->deleteReview($id)) {
-            $_SESSION['success'] = 'Xóa bình luận thành công';
-        } else {
-            $_SESSION['error'] = 'Có lỗi xảy ra';
+        $this->model->createProduct($data);
+        header('Location: ' . BASE_URL . '?act=admin-products');
+    }
+
+    public function productEdit(): void
+    {
+        $id = (int)($_GET['id'] ?? 0);
+        $product = $this->model->getProduct($id);
+        if (!$product) { http_response_code(404); echo 'Không tìm thấy'; return; }
+        $categories = $this->model->getCategories();
+        $title = 'Sửa sản phẩm';
+        $isEdit = true;
+        include './views/admin/products/form.php';
+    }
+
+    public function productUpdate(): void
+    {
+        $id = (int)($_POST['id'] ?? 0);
+        $data = $this->collectProductData();
+        if (!empty($_FILES['image']['name'])) {
+            $path = uploadFile($_FILES['image'], 'uploads/');
+            if ($path) { $data['image'] = $path; }
         }
-        
-        header('Location: ' . BASE_URL . 'admin/reviews');
-        exit;
+        $this->model->updateProduct($id, $data);
+        header('Location: ' . BASE_URL . '?act=admin-products');
+    }
+
+    public function productDelete(): void
+    {
+        $id = (int)($_GET['id'] ?? 0);
+        $this->model->deleteProduct($id);
+        header('Location: ' . BASE_URL . '?act=admin-products');
+    }
+
+    public function productShow(): void
+    {
+        $id = (int)($_GET['id'] ?? 0);
+        $product = $this->model->getProduct($id);
+        if (!$product) { http_response_code(404); echo 'Không tìm thấy'; return; }
+        $title = 'Chi tiết sản phẩm';
+        include './views/admin/products/show.php';
+    }
+
+    // Users & Reviews: readonly
+    public function users(): void
+    {
+        $title = 'Quản lý người dùng';
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $limit = 10; $offset = ($page-1)*$limit;
+        $total = $this->model->countUsers();
+        $pages = max(1, (int)ceil($total / $limit));
+        $users = $this->model->getUsersPaginated($offset, $limit);
+        include './views/admin/users/index.php';
+    }
+
+    public function reviews(): void
+    {
+        $title = 'Quản lý bình luận';
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $limit = 10; $offset = ($page-1)*$limit;
+        $total = $this->model->countReviews();
+        $pages = max(1, (int)ceil($total / $limit));
+        $reviews = $this->model->getReviewsPaginated($offset, $limit);
+        include './views/admin/reviews/index.php';
+    }
+
+    private function collectProductData(): array
+    {
+        $name = trim($_POST['name'] ?? '');
+        $slug = trim($_POST['slug'] ?? '');
+        if ($name === '') { $name = 'Sản phẩm chưa đặt tên'; }
+        if ($slug === '') { $slug = $this->slugify($name); }
+        $createdAt = trim($_POST['created_at'] ?? '');
+        // Convert from input type datetime-local to MySQL DATETIME
+        if ($createdAt !== '') {
+            // Normalize: `YYYY-MM-DDTHH:MM` or `YYYY-MM-DD HH:MM`
+            $createdAt = str_replace('T', ' ', $createdAt);
+            if (strlen($createdAt) === 16) { $createdAt .= ':00'; }
+        }
+        return [
+            'name' => $name,
+            'slug' => $slug,
+            'price' => (int)($_POST['price'] ?? 0),
+            'category_id' => (int)($_POST['category_id'] ?? 0),
+            'stock' => (int)($_POST['stock'] ?? 0),
+            'discount_percent' => (int)($_POST['discount_percent'] ?? 0),
+            'description' => trim($_POST['description'] ?? ''),
+            'image' => $_POST['image_existing'] ?? '',
+            'created_at' => $createdAt
+        ];
+    }
+
+    private function slugify(string $text): string
+    {
+        $text = strtolower(trim($text));
+        $text = preg_replace('~[^\pL\d]+~u', '-', $text);
+        $text = trim($text, '-');
+        return $text ?: 'item';
     }
 }
+
+?>
+
+

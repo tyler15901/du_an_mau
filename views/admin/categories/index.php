@@ -1,72 +1,39 @@
-<?php
-$pageTitle = 'Quản lý danh mục';
-$currentPage = 'categories';
+<?php 
+$__admin_view = __FILE__;
 ob_start();
 ?>
-
-<div class="page-header">
-    <h1 class="page-title">Quản lý danh mục</h1>
-    <p class="page-subtitle">Thêm, sửa, xóa danh mục sản phẩm</p>
+<div class="d-flex justify-content-between align-items-center mb-3" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+  <h1 class="h3 m-0">Danh mục</h1>
+  <a class="btn btn-secondary" href="<?= BASE_URL ?>?act=admin-category-create">Thêm</a>
+  </div>
+<div class="card" style="padding:12px">
+  <table class="table">
+    <thead><tr><th>ID</th><th>Tên</th><th>Slug</th><th style="width:160px"></th></tr></thead>
+    <tbody>
+      <?php foreach($categories as $c): ?>
+      <tr>
+        <td><?= (int)$c['id'] ?></td>
+        <td><?= htmlspecialchars($c['name']) ?></td>
+        <td><?= htmlspecialchars($c['slug']) ?></td>
+        <td>
+          <a class="btn btn-sm btn-secondary" href="<?= BASE_URL ?>?act=admin-category-edit&id=<?= (int)$c['id'] ?>">Sửa</a>
+          <a class="btn btn-sm btn-outline-danger" href="<?= BASE_URL ?>?act=admin-category-delete&id=<?= (int)$c['id'] ?>" onclick="return confirm('Xóa danh mục?')">Xóa</a>
+        </td>
+      </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table>
 </div>
-
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-tags me-2"></i>Danh sách danh mục</h5>
-        <a href="<?= BASE_URL ?>admin/categories/add" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Thêm danh mục
-        </a>
-    </div>
-    <div class="card-body">
-        <?php if (!empty($categories)): ?>
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Tên danh mục</th>
-                        <th>Slug</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($categories as $category): ?>
-                    <tr>
-                        <td><?= $category['id'] ?></td>
-                        <td><strong><?= htmlspecialchars($category['name']) ?></strong></td>
-                        <td><small class="text-muted"><?= htmlspecialchars($category['slug']) ?></small></td>
-                        <td>
-                            <div class="btn-group" role="group">
-                                <a href="<?= BASE_URL ?>admin/categories/edit/<?= $category['id'] ?>" class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete(<?= $category['id'] ?>, '<?= htmlspecialchars($category['name']) ?>')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        <?php else: ?>
-        <div class="text-center py-5">
-            <i class="fas fa-box-open" style="font-size: 4rem; color: #ccc; margin-bottom: 1rem;"></i>
-            <h4>Chưa có danh mục nào</h4>
-            <p class="text-muted">Bắt đầu bằng cách thêm danh mục đầu tiên</p>
-            <a href="<?= BASE_URL ?>admin/categories/add" class="btn btn-primary btn-lg">
-                <i class="fas fa-plus me-2"></i>Thêm danh mục
-            </a>
-        </div>
-        <?php endif; ?>
-    </div>
-</div>
-
-
-
-<?php
-$content = ob_get_clean();
-include 'admin/views/layout.php';
-?>
+<nav class="mt-3">
+  <ul class="pagination">
+    <?php for($i=1;$i<=$pages;$i++): ?>
+      <li class="page-item <?= $i===$page?'active':'' ?>">
+        <a class="page-link" href="<?= BASE_URL ?>?act=admin-categories&page=<?= $i ?>"><?= $i ?></a>
+      </li>
+    <?php endfor; ?>
+  </ul>
+  <div class="small text-secondary">Trang <?= $page ?> / <?= $pages ?> (<?= $total ?> mục)</div>
+</nav>
+<?php $__content = ob_get_clean(); include __DIR__ . '/../layout.php'; ?>
 
 
